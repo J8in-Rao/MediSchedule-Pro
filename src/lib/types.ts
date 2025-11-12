@@ -62,7 +62,8 @@ export type Resource = {
   type: 'Drug' | 'Instrument' | 'Material';
   quantity: number;
   in_use: boolean;
-}
+};
+
 
 export type OtUtilization = {
   month: string;
@@ -77,4 +78,29 @@ export type SurgeryByType = {
   fill: string;
 };
 
-    
+// This type seems to be a duplicate or old version.
+// Keeping OperationSchedule as the primary type for surgeries.
+export type Surgery = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  date: string; // ISO string
+  startTime: string; // "HH:MM"
+  endTime: string; // "HH:MM"
+  procedure: string;
+  room: string; // This corresponds to otId in OperationSchedule
+  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'In Progress';
+  equipment?: string[];
+};
+
+export type SupportMessage = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  message: string;
+  createdAt: { seconds: number; nanoseconds: number } | Date;
+  status: 'New' | 'Read' | 'Resolved';
+};
