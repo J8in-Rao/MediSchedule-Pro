@@ -33,7 +33,8 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const formSchema = z.object({
+// Base schema for all fields
+const baseFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email."),
   password: z.string().min(8, "Password must be at least 8 characters.").optional(),
@@ -42,7 +43,10 @@ const formSchema = z.object({
   phone: z.string().optional(),
   shift_hours: z.string().optional(),
   availability: z.array(z.string()).optional(),
-}).refine(data => {
+});
+
+// Refinement for doctor-specific fields
+const doctorRefinement = (schema: typeof baseFormSchema) => schema.refine(data => {
     if (data.role === 'doctor' && !data.specialization) return false;
     return true;
 }, {
@@ -62,6 +66,15 @@ const formSchema = z.object({
     path: ['availability'],
 });
 
+// Schema for adding a new staff member (password is required)
+const addStaffSchema = doctorRefinement(baseFormSchema).refine(data => data.password && data.password.length > 0, {
+    message: "Password is required for new staff members.",
+    path: ["password"],
+});
+
+// Schema for editing an existing staff member (password is not included)
+const editStaffSchema = doctorRefinement(baseFormSchema.omit({ password: true }));
+
 
 type StaffFormProps = {
   isOpen: boolean;
@@ -72,10 +85,8 @@ type StaffFormProps = {
 export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
     const firestore = useFirestore();
     
-    const finalSchema = staff ? formSchema.omit({ password: true }) : formSchema.refine(data => data.password, {
-        message: "Password is required for new staff members.",
-        path: ["password"],
-    });
+    // Choose the right schema based on whether we are editing or adding
+    const finalSchema = staff ? editStaffSchema : addStaffSchema;
 
     const form = useForm<z.infer<typeof finalSchema>>({
         resolver: zodResolver(finalSchema),
@@ -129,7 +140,7 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
             toast({ title: "Staff Updated", description: `${values.name}'s profile has been updated.` });
 
         } else { // Creating new user (Doctor or Admin)
-            const newValues = values as z.infer<typeof formSchema>;
+            const newValues = values as z.infer<typeof addStaffSchema>;
             
             const serializableUserCredential = await createAuthUser(newValues.email, newValues.password!);
             const user = serializableUserCredential.user;
