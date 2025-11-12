@@ -12,6 +12,7 @@ import {
   Users,
   BarChart,
   User,
+  Bot,
 } from 'lucide-react';
 import Image from 'next/image';
 import { signOut } from 'firebase/auth';
@@ -159,7 +160,7 @@ export default function Header({ userRole }: HeaderProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/dashboard/settings">Settings</Link></DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>

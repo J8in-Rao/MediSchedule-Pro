@@ -15,6 +15,7 @@ import {
   Users,
   BarChart,
   Settings,
+  Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '../shared/page-header';
@@ -75,8 +76,10 @@ export default function SidebarNav({ userRole }: SidebarNavProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                href="/dashboard/settings"
+                className={cn('flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
+                  { 'bg-accent text-accent-foreground': pathname === '/dashboard/settings' }
+                )}
               >
                 <Settings className="h-5 w-5" />
                 <span className="sr-only">Settings</span>
