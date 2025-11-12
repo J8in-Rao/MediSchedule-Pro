@@ -43,6 +43,7 @@ import { toast } from "@/hooks/use-toast";
 import { useFirestore } from "@/firebase";
 import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection } from "firebase/firestore";
+import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
   procedure: z.string().min(1, "Procedure is required"),
@@ -52,6 +53,14 @@ const formSchema = z.object({
   startTime: z.string().regex(/^([01]\\d|2[0-3]):([0-5]\\d)$/, "Invalid time format (HH:MM)"),
   endTime: z.string().regex(/^([01]\\d|2[0-3]):([0-5]\\d)$/, "Invalid time format (HH:MM)"),
   room: z.string().min(1, "Room is required"),
+  anesthesiaType: z.string().min(1, "Anesthesia type is required"),
+  anesthesiologistName: z.string().min(1, "Anesthesiologist name is required"),
+  assistantSurgeon: z.string().optional(),
+  nurses: z.string().optional(),
+  preOpNotes: z.string().optional(),
+  postOpNotes: z.string().optional(),
+  doctorRemarks: z.string().optional(),
+  specialRequirements: z.string().optional(),
 });
 
 type ScheduleFormProps = {
@@ -69,6 +78,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
     defaultValues: surgery ? {
       ...surgery,
       date: new Date(surgery.date),
+      nurses: surgery.nurses?.join(', '),
     } : {
       procedure: "",
       patientId: "",
@@ -77,6 +87,14 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
       startTime: "",
       endTime: "",
       room: "",
+      anesthesiaType: "",
+      anesthesiologistName: "",
+      assistantSurgeon: "",
+      nurses: "",
+      preOpNotes: "",
+      postOpNotes: "",
+      doctorRemarks: "",
+      specialRequirements: "",
     },
   });
   
@@ -95,6 +113,8 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
       doctorName: doctor.name,
       patientName: patient.name,
       status: surgery?.status || 'Scheduled',
+      nurses: values.nurses?.split(',').map(n => n.trim()).filter(n => n),
+      equipment: surgery?.equipment || [],
     };
 
     if (surgery) {
@@ -114,12 +134,12 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{surgery ? "Edit Surgery" : "Schedule New Surgery"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-6">
             <FormField
               control={form.control}
               name="procedure"
@@ -268,8 +288,114 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                   </FormItem>
                 )}
               />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="anesthesiaType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Anesthesia Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., General" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="anesthesiologistName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Anesthesiologist</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Dr. Jane Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="assistantSurgeon"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assistant Surgeon</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Dr. Alex Ray" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="nurses"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nurses</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nurse 1, Nurse 2, ..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="preOpNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pre-Operative Notes</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="postOpNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Post-Operative Notes</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="doctorRemarks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Doctor's Remarks</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="specialRequirements"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Drugs, Instruments, and Materials</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="List any unique requirements..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <DialogFooter>
+            <DialogFooter className="sticky bottom-0 bg-background pt-4">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
               <Button type="submit">Save Schedule</Button>
             </DialogFooter>

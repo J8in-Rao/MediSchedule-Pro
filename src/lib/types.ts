@@ -36,6 +36,15 @@ export type Surgery = {
   procedure: string;
   room: string;
   status: 'Scheduled' | 'Completed' | 'Cancelled' | 'In Progress';
+  anesthesiaType: string;
+  anesthesiologistName: string;
+  assistantSurgeon?: string;
+  nurses?: string[];
+  preOpNotes?: string;
+  postOpNotes?: string;
+  doctorRemarks?: string;
+  specialRequirements?: string;
+  reportUrls?: string[];
   equipment: string[];
 };
 

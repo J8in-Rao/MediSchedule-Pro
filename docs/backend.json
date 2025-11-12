@@ -129,48 +129,29 @@
       "description": "Represents a scheduled surgery.",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "patientId": {
-          "type": "string"
-        },
-        "patientName": {
-          "type": "string"
-        },
-        "doctorId": {
-          "type": "string"
-        },
-        "doctorName": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string",
-          "format": "date"
-        },
-        "startTime": {
-          "type": "string",
-          "format": "time"
-        },
-        "endTime": {
-          "type": "string",
-          "format": "time"
-        },
-        "procedure": {
-          "type": "string"
-        },
-        "room": {
-          "type": "string"
-        },
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "startTime": { "type": "string", "format": "time" },
+        "endTime": { "type": "string", "format": "time" },
+        "room": { "type": "string" },
+        "procedure": { "type": "string" },
         "status": {
           "type": "string",
-          "enum": [
-            "Scheduled",
-            "Completed",
-            "Cancelled",
-            "In Progress"
-          ]
-        }
+          "enum": ["Scheduled", "Completed", "Cancelled", "In Progress"]
+        },
+        "anesthesiaType": { "type": "string" },
+        "anesthesiologistName": { "type": "string" },
+        "assistantSurgeon": { "type": "string" },
+        "nurses": { "type": "array", "items": { "type": "string" } },
+        "preOpNotes": { "type": "string" },
+        "postOpNotes": { "type": "string" },
+        "doctorRemarks": { "type": "string" },
+        "specialRequirements": { "type": "string" },
+        "reportUrls": { "type": "array", "items": { "type": "string", "format": "uri" } }
       },
       "required": [
         "patientId",
@@ -182,7 +163,9 @@
         "endTime",
         "procedure",
         "room",
-        "status"
+        "status",
+        "anesthesiaType",
+        "anesthesiologistName"
       ]
     },
     "SupportMessage": {
