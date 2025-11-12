@@ -23,25 +23,48 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import type { Doctor } from '@/lib/types';
-import { useState } from 'react';
+import type { Doctor, UserProfile } from '@/lib/types';
+import { useState, useMemo } from 'react';
 import { StaffForm } from '@/components/staff/staff-form';
+
+// Combined type for the staff list
+export type StaffMember = UserProfile & Partial<Doctor>;
 
 
 export default function StaffPage() {
   const firestore = useFirestore();
+  
+  const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+  const { data: users, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersCollection);
+  
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
-  const { data: doctors, isLoading } = useCollection<Doctor>(doctorsCollection);
+  const { data: doctors, isLoading: isLoadingDoctors } = useCollection<Doctor>(doctorsCollection);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | undefined>(undefined);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | undefined>(undefined);
+
+  const staffMembers = useMemo(() => {
+    if (!users || !doctors) return [];
+    
+    const doctorsMap = new Map(doctors.map(d => [d.id, d]));
+
+    return users.map(user => {
+      if (user.role === 'doctor' && doctorsMap.has(user.id)) {
+        return { ...user, ...doctorsMap.get(user.id) };
+      }
+      return user;
+    });
+  }, [users, doctors]);
+
+  const isLoading = isLoadingUsers || isLoadingDoctors;
 
   const handleAdd = () => {
-    setSelectedDoctor(undefined);
+    setSelectedStaff(undefined);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (doctor: Doctor) => {
-    setSelectedDoctor(doctor);
+  const handleEdit = (staff: StaffMember) => {
+    setSelectedStaff(staff);
     setIsFormOpen(true);
   };
 
@@ -49,7 +72,7 @@ export default function StaffPage() {
     <>
       <PageHeader
         title="Staff Management"
-        description="Add, edit, and manage doctor details and availability."
+        description="Add, edit, and manage staff details and availability."
       >
         <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Staff Member
@@ -58,7 +81,7 @@ export default function StaffPage() {
       <Card>
         <CardHeader>
           <CardTitle>Staff List</CardTitle>
-          <CardDescription>A list of all doctors in the system.</CardDescription>
+          <CardDescription>A list of all admins and doctors in the system.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -68,6 +91,7 @@ export default function StaffPage() {
                   <span className="sr-only">Image</span>
                 </TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Specialization</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Availability
@@ -78,27 +102,32 @@ export default function StaffPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>}
-              {!isLoading && doctors?.map(doctor => (
-                <TableRow key={doctor.id}>
+              {isLoading && <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>}
+              {!isLoading && staffMembers?.map(staff => (
+                <TableRow key={staff.id}>
                   <TableCell className="hidden sm:table-cell">
-                    <Image
-                      alt="Doctor avatar"
-                      className="aspect-square rounded-full object-cover"
-                      height="64"
-                      src={doctor.avatarUrl}
-                      width="64"
-                      data-ai-hint="doctor portrait"
-                    />
+                     {staff.role === 'doctor' && staff.avatarUrl && (
+                       <Image
+                        alt="Staff avatar"
+                        className="aspect-square rounded-full object-cover"
+                        height="64"
+                        src={staff.avatarUrl}
+                        width="64"
+                        data-ai-hint="doctor portrait"
+                      />
+                     )}
                   </TableCell>
-                  <TableCell className="font-medium">{doctor.name}</TableCell>
-                  <TableCell>{doctor.specialization}</TableCell>
+                  <TableCell className="font-medium">{staff.firstName} {staff.lastName}</TableCell>
+                  <TableCell className="capitalize">{staff.role}</TableCell>
+                  <TableCell>{staff.specialization || 'N/A'}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <div className="flex gap-1 flex-wrap">
-                      {doctor.availability.map(day => (
-                        <Badge key={day} variant="secondary">{day}</Badge>
-                      ))}
-                    </div>
+                    {staff.availability && staff.availability.length > 0 ? (
+                      <div className="flex gap-1 flex-wrap">
+                        {staff.availability.map(day => (
+                          <Badge key={day} variant="secondary">{day}</Badge>
+                        ))}
+                      </div>
+                    ) : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -114,16 +143,16 @@ export default function StaffPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleEdit(doctor)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(staff)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
-              {!isLoading && doctors?.length === 0 && (
+              {!isLoading && staffMembers?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No staff members found.
                   </TableCell>
                 </TableRow>
@@ -135,7 +164,7 @@ export default function StaffPage() {
       <StaffForm 
         isOpen={isFormOpen}
         setIsOpen={setIsFormOpen}
-        doctor={selectedDoctor}
+        staff={selectedStaff}
       />
     </>
   );

@@ -8,7 +8,7 @@ import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { toast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import type { Doctor } from "@/lib/types";
+import type { StaffMember } from "@/app/dashboard/staff/page";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -66,23 +66,27 @@ const formSchema = z.object({
 type StaffFormProps = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  doctor?: Doctor;
+  staff?: StaffMember;
 };
 
-export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
+export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
     const firestore = useFirestore();
     
-    const finalSchema = doctor ? formSchema.omit({ password: true }) : formSchema.refine(data => data.password, {
+    const finalSchema = staff ? formSchema.omit({ password: true }) : formSchema.refine(data => data.password, {
         message: "Password is required for new staff members.",
         path: ["password"],
     });
 
     const form = useForm<z.infer<typeof finalSchema>>({
         resolver: zodResolver(finalSchema),
-        defaultValues: doctor ? {
-          ...doctor,
-          role: 'doctor',
-          phone: doctor.phone || '',
+        defaultValues: staff ? {
+          name: `${staff.firstName} ${staff.lastName}`,
+          email: staff.email,
+          role: staff.role,
+          specialization: staff.specialization || '',
+          phone: staff.phone || '',
+          shift_hours: staff.shift_hours || '9AM-5PM',
+          availability: staff.availability || [],
         } : {
             name: "",
             email: "",
@@ -99,25 +103,28 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
 
   async function onSubmit(values: z.infer<typeof finalSchema>) {
     try {
-        if (doctor) { // Editing existing doctor
-            const doctorRef = doc(firestore, "doctors", doctor.id);
-            setDocumentNonBlocking(doctorRef, {
-                name: values.name,
-                email: values.email,
-                specialization: values.specialization,
-                phone: values.phone,
-                shift_hours: values.shift_hours,
-                availability: values.availability,
-            }, { merge: true });
-
-            const userRef = doc(firestore, "users", doctor.id);
-            const [firstName, ...lastName] = values.name.split(' ');
+        const [firstName, ...lastName] = values.name.split(' ');
+        
+        if (staff) { // Editing existing staff
+            const userRef = doc(firestore, "users", staff.id);
             setDocumentNonBlocking(userRef, {
                 email: values.email,
                 firstName,
                 lastName: lastName.join(' '),
+                role: values.role
             }, { merge: true });
 
+            if (values.role === 'doctor') {
+                const doctorRef = doc(firestore, "doctors", staff.id);
+                setDocumentNonBlocking(doctorRef, {
+                    name: values.name,
+                    email: values.email,
+                    specialization: values.specialization,
+                    phone: values.phone,
+                    shift_hours: values.shift_hours,
+                    availability: values.availability,
+                }, { merge: true });
+            }
 
             toast({ title: "Staff Updated", description: `${values.name}'s profile has been updated.` });
 
@@ -126,8 +133,6 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
             
             const serializableUserCredential = await createAuthUser(newValues.email, newValues.password!);
             const user = serializableUserCredential.user;
-
-            const [firstName, ...lastName] = newValues.name.split(' ');
 
             const userRef = doc(firestore, "users", user.uid);
             setDocumentNonBlocking(userRef, {
@@ -150,6 +155,13 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
                     availability: newValues.availability,
                     avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
                 }, { merge: true });
+            } else if (newValues.role === 'admin') {
+                const adminRef = doc(firestore, 'admins', user.uid);
+                setDocumentNonBlocking(adminRef, {
+                    id: user.uid,
+                    name: newValues.name,
+                    email: newValues.email
+                }, { merge: true });
             }
 
             toast({ title: "User Added", description: `${newValues.name} (${newValues.role}) has been added.` });
@@ -169,7 +181,7 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{doctor ? "Edit Staff Member" : "Add New Staff Member"}</DialogTitle>
+          <DialogTitle>{staff ? "Edit Staff Member" : "Add New Staff Member"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-6">
@@ -187,7 +199,7 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
                   <FormMessage />
                 </FormItem>
             )}/>
-            {!doctor && (
+            {!staff && (
                 <FormField control={form.control} name="password" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Password</FormLabel>
@@ -196,38 +208,36 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
                     </FormItem>
                 )}/>
             )}
-             {!doctor && (
-                <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                    <FormItem className="space-y-3">
-                    <FormLabel>Select Role</FormLabel>
-                    <FormControl>
-                        <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex space-x-4"
-                        >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="doctor" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Doctor</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="admin" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Admin</FormLabel>
-                        </FormItem>
-                        </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            )}
+             <FormField
+             control={form.control}
+             name="role"
+             render={({ field }) => (
+                 <FormItem className="space-y-3">
+                 <FormLabel>Select Role</FormLabel>
+                 <FormControl>
+                     <RadioGroup
+                     onValueChange={field.onChange}
+                     defaultValue={field.value}
+                     className="flex space-x-4"
+                     >
+                     <FormItem className="flex items-center space-x-2 space-y-0">
+                         <FormControl>
+                         <RadioGroupItem value="doctor" />
+                         </FormControl>
+                         <FormLabel className="font-normal">Doctor</FormLabel>
+                     </FormItem>
+                     <FormItem className="flex items-center space-x-2 space-y-0">
+                         <FormControl>
+                         <RadioGroupItem value="admin" />
+                         </FormControl>
+                         <FormLabel className="font-normal">Admin</FormLabel>
+                     </FormItem>
+                     </RadioGroup>
+                 </FormControl>
+                 <FormMessage />
+                 </FormItem>
+             )}
+             />
 
             {role === 'doctor' && (
               <>
