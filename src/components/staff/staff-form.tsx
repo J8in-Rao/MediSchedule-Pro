@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "../ui/checkbox";
 import { createAuthUser } from "@/firebase/auth/create-user";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -36,12 +37,29 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email."),
   password: z.string().min(8, "Password must be at least 8 characters.").optional(),
-  specialization: z.string().min(1, "Specialization is required."),
+  role: z.enum(["doctor", "admin"], { required_error: "You need to select a role."}),
+  specialization: z.string().optional(),
   phone: z.string().optional(),
-  shift_hours: z.string().min(1, "Shift hours are required."),
-  availability: z.array(z.string()).refine((value) => value.some((item) => item), {
+  shift_hours: z.string().optional(),
+  availability: z.array(z.string()).optional(),
+}).refine(data => {
+    if (data.role === 'doctor' && !data.specialization) return false;
+    return true;
+}, {
+    message: 'Specialization is required for doctors.',
+    path: ['specialization'],
+}).refine(data => {
+    if (data.role === 'doctor' && (!data.shift_hours || data.shift_hours.length === 0)) return false;
+    return true;
+}, {
+    message: 'Shift hours are required for doctors.',
+    path: ['shift_hours'],
+}).refine(data => {
+    if (data.role === 'doctor' && (!data.availability || data.availability.length === 0)) return false;
+    return true;
+}, {
     message: 'You have to select at least one day.',
-  }),
+    path: ['availability'],
 });
 
 
@@ -54,7 +72,6 @@ type StaffFormProps = {
 export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
     const firestore = useFirestore();
     
-    // Adjust schema based on whether we are editing or creating
     const finalSchema = doctor ? formSchema.omit({ password: true }) : formSchema.refine(data => data.password, {
         message: "Password is required for new staff members.",
         path: ["password"],
@@ -64,11 +81,13 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
         resolver: zodResolver(finalSchema),
         defaultValues: doctor ? {
           ...doctor,
+          role: 'doctor',
           phone: doctor.phone || '',
         } : {
             name: "",
             email: "",
             password: "",
+            role: "doctor",
             specialization: "",
             phone: "",
             shift_hours: "9AM-5PM",
@@ -76,10 +95,11 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
         },
     });
 
+    const role = form.watch('role');
+
   async function onSubmit(values: z.infer<typeof finalSchema>) {
     try {
-        if (doctor) {
-            // Editing existing doctor
+        if (doctor) { // Editing existing doctor
             const doctorRef = doc(firestore, "doctors", doctor.id);
             setDocumentNonBlocking(doctorRef, {
                 name: values.name,
@@ -101,40 +121,38 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
 
             toast({ title: "Staff Updated", description: `${values.name}'s profile has been updated.` });
 
-        } else {
-            // Creating new doctor
-            // This requires values to have a password, ensured by the schema refinement.
-            const newDoctorValues = values as z.infer<typeof formSchema>;
+        } else { // Creating new user (Doctor or Admin)
+            const newValues = values as z.infer<typeof formSchema>;
             
-            const serializableUserCredential = await createAuthUser(newDoctorValues.email, newDoctorValues.password!);
+            const serializableUserCredential = await createAuthUser(newValues.email, newValues.password!);
             const user = serializableUserCredential.user;
 
-            const [firstName, ...lastName] = newDoctorValues.name.split(' ');
+            const [firstName, ...lastName] = newValues.name.split(' ');
 
-            // Create user profile doc
             const userRef = doc(firestore, "users", user.uid);
             setDocumentNonBlocking(userRef, {
                 id: user.uid,
-                email: newDoctorValues.email,
+                email: newValues.email,
                 firstName: firstName,
                 lastName: lastName.join(' '),
-                role: 'doctor'
+                role: newValues.role
             }, { merge: true });
 
-            // Create doctor profile doc
-            const doctorRef = doc(firestore, "doctors", user.uid);
-            setDocumentNonBlocking(doctorRef, {
-                id: user.uid,
-                name: newDoctorValues.name,
-                email: newDoctorValues.email,
-                specialization: newDoctorValues.specialization,
-                phone: newDoctorValues.phone,
-                shift_hours: newDoctorValues.shift_hours,
-                availability: newDoctorValues.availability,
-                avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
-            }, { merge: true });
+            if (newValues.role === 'doctor') {
+                const doctorRef = doc(firestore, "doctors", user.uid);
+                setDocumentNonBlocking(doctorRef, {
+                    id: user.uid,
+                    name: newValues.name,
+                    email: newValues.email,
+                    specialization: newValues.specialization,
+                    phone: newValues.phone,
+                    shift_hours: newValues.shift_hours,
+                    availability: newValues.availability,
+                    avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
+                }, { merge: true });
+            }
 
-            toast({ title: "Staff Added", description: `${newDoctorValues.name} has been added to the staff.` });
+            toast({ title: "User Added", description: `${newValues.name} (${newValues.role}) has been added.` });
         }
         setIsOpen(false);
         form.reset();
@@ -178,76 +196,113 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
                     </FormItem>
                 )}/>
             )}
-             <FormField control={form.control} name="specialization" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specialization</FormLabel>
-                  <FormControl><Input placeholder="e.g., Cardiology" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-            )}/>
-            <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl><Input placeholder="(123) 456-7890" {...field} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}/>
-                <FormField control={form.control} name="shift_hours" render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Shift Hours</FormLabel>
-                    <FormControl><Input placeholder="e.g., 9AM-5PM" {...field} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}/>
-            </div>
-             <FormField
-              control={form.control}
-              name="availability"
-              render={() => (
-                <FormItem>
-                  <div className="mb-4">
-                    <FormLabel className="text-base">Availability</FormLabel>
-                  </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4">
-                  {weekDays.map((day) => (
-                    <FormField
-                      key={day}
-                      control={form.control}
-                      name="availability"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={day}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
+             {!doctor && (
+                <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                    <FormLabel>Select Role</FormLabel>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-4"
+                        >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(day)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...(field.value || []), day])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== day
-                                        )
-                                      )
-                                }}
-                              />
+                            <RadioGroupItem value="doctor" />
                             </FormControl>
-                            <FormLabel className="font-normal">
-                              {day}
-                            </FormLabel>
-                          </FormItem>
-                        )
-                      }}
-                    />
-                  ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                            <FormLabel className="font-normal">Doctor</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="admin" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Admin</FormLabel>
+                        </FormItem>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
+
+            {role === 'doctor' && (
+              <>
+                <FormField control={form.control} name="specialization" render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Specialization</FormLabel>
+                    <FormControl><Input placeholder="e.g., Cardiology" {...field} /></FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}/>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="phone" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl><Input placeholder="(123) 456-7890" {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="shift_hours" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Shift Hours</FormLabel>
+                        <FormControl><Input placeholder="e.g., 9AM-5PM" {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
+                <FormField
+                control={form.control}
+                name="availability"
+                render={() => (
+                    <FormItem>
+                    <div className="mb-4">
+                        <FormLabel className="text-base">Availability</FormLabel>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4">
+                    {weekDays.map((day) => (
+                        <FormField
+                        key={day}
+                        control={form.control}
+                        name="availability"
+                        render={({ field }) => {
+                            return (
+                            <FormItem
+                                key={day}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                                <FormControl>
+                                <Checkbox
+                                    checked={field.value?.includes(day)}
+                                    onCheckedChange={(checked) => {
+                                    return checked
+                                        ? field.onChange([...(field.value || []), day])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                            (value) => value !== day
+                                            )
+                                        )
+                                    }}
+                                />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                {day}
+                                </FormLabel>
+                            </FormItem>
+                            )
+                        }}
+                        />
+                    ))}
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+              </>
+            )}
 
             <DialogFooter className="sticky bottom-0 bg-background pt-4">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>

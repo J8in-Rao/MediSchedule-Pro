@@ -38,6 +38,32 @@
         "role"
       ]
     },
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator with full system access.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the admin, should be the same as the user ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The admin's full name."
+        },
+        "email": {
+          "type": "string",
+          "description": "Admin's login email.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
+    },
     "Doctor": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Doctor",
@@ -218,6 +244,13 @@
         "definition": {
           "schema": { "$ref": "#/entities/User" },
           "description": "Stores user profiles including their role (admin or doctor)."
+        }
+      },
+      {
+        "path": "/admins/{adminId}",
+        "definition": {
+          "schema": { "$ref": "#/entities/Admin" },
+          "description": "Stores admin profiles."
         }
       },
       {

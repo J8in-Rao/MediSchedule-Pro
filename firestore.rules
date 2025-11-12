@@ -29,12 +29,15 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/operations?where("doctorId", "==", doctorId).where("patientId", "==", patientId));
     }
 
-    // Admins can read all user docs. Doctors can only read their own.
+    // Admins can read/write all user docs. Doctors can only read their own.
     // Only admins can create new user docs.
-    // Users can update their own doc (e.g., from settings page).
     match /users/{userId} {
       allow read, update: if isSignedIn() && (isAdmin() || isOwner(userId));
       allow create: if isAdmin();
+    }
+    
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
     }
 
     // Admins can manage doctors, patients, OTs, and resources
@@ -72,13 +75,11 @@ service cloud.firestore {
     match /operations/{operationId} {
       allow read: if isAdmin() || (isDoctor() && resource.data.doctorId == request.auth.uid);
       allow create: if isAdmin();
-      allow update(diff) {
-        return isAdmin() || (
-          isDoctor() &&
-          resource.data.doctorId == request.auth.uid &&
-          diff.affectedKeys().hasOnly(['status', 'remarks'])
-        );
-      }
+      allow update: if isAdmin() || (
+        isDoctor() &&
+        resource.data.doctorId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'remarks'])
+      );
     }
   }
 }
