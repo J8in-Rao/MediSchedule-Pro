@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useFirestore } from "@/firebase";
-import { doc } from 'firebase/firestore';
+import { doc, serverTimestamp } from 'firebase/firestore';
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { toast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -31,6 +31,7 @@ import { Checkbox } from "../ui/checkbox";
 import { createAuthUser } from "@/firebase/auth/create-user";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import React from "react";
+import { Switch } from "../ui/switch";
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -44,6 +45,8 @@ const baseFormSchema = z.object({
   phone: z.string().optional(),
   shift_hours: z.string().optional(),
   availability: z.array(z.string()).optional(),
+  verified: z.boolean().default(false).optional(),
+  isActive: z.boolean().default(true).optional(),
 });
 
 // Refinement for doctor-specific fields
@@ -86,7 +89,6 @@ type StaffFormProps = {
 export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
     const firestore = useFirestore();
     
-    // Choose the right schema based on whether we are editing or adding
     const finalSchema = staff ? editStaffSchema : addStaffSchema;
 
     const form = useForm<z.infer<typeof finalSchema>>({
@@ -95,10 +97,12 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
           name: `${staff.firstName} ${staff.lastName}`,
           email: staff.email,
           role: staff.role,
+          isActive: staff.isActive,
           specialization: staff.specialization || '',
           phone: staff.phone || '',
           shift_hours: staff.shift_hours || '9AM-5PM',
           availability: staff.availability || [],
+          verified: staff.verified || false,
         } : {
             name: "",
             email: "",
@@ -108,6 +112,8 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
             phone: "",
             shift_hours: "9AM-5PM",
             availability: [],
+            verified: false,
+            isActive: true,
         },
     });
 
@@ -119,10 +125,12 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                 name: `${staff.firstName} ${staff.lastName}`,
                 email: staff.email,
                 role: staff.role,
+                isActive: staff.isActive,
                 specialization: staff.specialization || '',
                 phone: staff.phone || '',
                 shift_hours: staff.shift_hours || '9AM-5PM',
                 availability: staff.availability || [],
+                verified: staff.verified || false,
             });
         } else {
             form.reset({
@@ -134,6 +142,8 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                 phone: "",
                 shift_hours: "9AM-5PM",
                 availability: [],
+                verified: false,
+                isActive: true,
             });
         }
     }, [staff, form]);
@@ -148,7 +158,8 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                 email: values.email,
                 firstName,
                 lastName: lastName.join(' '),
-                role: values.role
+                role: values.role,
+                isActive: values.isActive,
             }, { merge: true });
 
             if (values.role === 'doctor') {
@@ -160,6 +171,7 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                     phone: values.phone,
                     shift_hours: values.shift_hours,
                     availability: values.availability,
+                    verified: values.verified,
                 }, { merge: true });
             }
 
@@ -177,7 +189,9 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                 email: newValues.email,
                 firstName: firstName,
                 lastName: lastName.join(' '),
-                role: newValues.role
+                role: newValues.role,
+                isActive: newValues.isActive,
+                created_at: serverTimestamp(),
             }, { merge: true });
 
             if (newValues.role === 'doctor') {
@@ -191,13 +205,8 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                     shift_hours: newValues.shift_hours,
                     availability: newValues.availability,
                     avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
-                }, { merge: true });
-            } else if (newValues.role === 'admin') {
-                const adminRef = doc(firestore, 'admins', user.uid);
-                setDocumentNonBlocking(adminRef, {
-                    id: user.uid,
-                    name: newValues.name,
-                    email: newValues.email
+                    verified: newValues.verified,
+                    created_at: serverTimestamp(),
                 }, { merge: true });
             }
 
@@ -275,6 +284,35 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                  </FormItem>
              )}
              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormLabel>Active</FormLabel>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {role === 'doctor' && (
+                <FormField
+                  control={form.control}
+                  name="verified"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <FormLabel>Verified</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             {role === 'doctor' && (
               <>
@@ -361,3 +399,5 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
     </Dialog>
   );
 }
+
+    

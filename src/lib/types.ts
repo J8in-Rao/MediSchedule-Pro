@@ -4,6 +4,8 @@ export type UserProfile = {
   firstName: string;
   lastName: string;
   role: 'admin' | 'doctor';
+  created_at: { seconds: number; nanoseconds: number } | Date;
+  isActive: boolean;
 };
 
 export type Doctor = {
@@ -15,6 +17,8 @@ export type Doctor = {
   shift_hours: string;
   availability: string[];
   avatarUrl: string;
+  verified: boolean;
+  created_at: { seconds: number; nanoseconds: number } | Date;
 };
 
 export type Patient = {
@@ -23,45 +27,57 @@ export type Patient = {
   age: number;
   gender: 'Male' | 'Female' | 'Other';
   case_description: string;
+  contact: string;
   admitted_on: string; // ISO string
-  avatarUrl: string;
+  created_by: string; // Admin UID
+  created_at: { seconds: number; nanoseconds: number } | Date;
 };
 
 export type OperationSchedule = {
   id: string;
-  patientId: string;
-  patientName: string;
-  doctorId: string;
-  doctorName: string;
-  otId: string;
+  patient_id: string;
+  doctor_id: string;
+  ot_id: string;
   date: string; // ISO string
-  startTime: string; // "HH:MM"
-  endTime: string; // "HH:MM"
+  start_time: string; // "HH:MM"
+  end_time: string; // "HH:MM"
   procedure: string;
-  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'In Progress';
-  anesthesiaType: string;
-  anesthesiologistName: string;
-  assistantSurgeon?: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  anesthesia_type: string;
+  anesthesiologist: string;
+  assistant_surgeon?: string;
   nurses?: string[];
   remarks?: string;
   report_url?: string;
   drugs_used?: string[];
   instruments?: string[];
+  created_by: string; // Admin UID
+  created_at: { seconds: number; nanoseconds: number } | Date;
+  updated_at: { seconds: number; nanoseconds: number } | Date;
+
+  // These are added on the client-side for display
+  patientName?: string;
+  doctorName?: string;
 };
 
 export type OperatingRoom = {
   id: string;
   room_number: string;
   capacity?: number;
-  status: 'Available' | 'Occupied' | 'Maintenance';
+  status: 'available' | 'in-use';
+  equipment?: string[];
+  created_at: { seconds: number; nanoseconds: number } | Date;
 }
 
 export type Resource = {
   id: string;
   name: string;
-  type: 'Drug' | 'Instrument' | 'Material';
+  type: 'drug' | 'instrument' | 'material';
   quantity: number;
+  unit?: string;
   in_use: boolean;
+  last_used: { seconds: number; nanoseconds: number } | Date;
+  created_at: { seconds: number; nanoseconds: number } | Date;
 };
 
 
@@ -78,29 +94,14 @@ export type SurgeryByType = {
   fill: string;
 };
 
-// This type seems to be a duplicate or old version.
-// Keeping OperationSchedule as the primary type for surgeries.
-export type Surgery = {
-  id: string;
-  patientId: string;
-  patientName: string;
-  doctorId: string;
-  doctorName: string;
-  date: string; // ISO string
-  startTime: string; // "HH:MM"
-  endTime: string; // "HH:MM"
-  procedure: string;
-  room: string; // This corresponds to otId in OperationSchedule
-  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'In Progress';
-  equipment?: string[];
-};
-
 export type SupportMessage = {
   id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  message: string;
-  createdAt: { seconds: number; nanoseconds: number } | Date;
-  status: 'New' | 'Read' | 'Resolved';
+  sender_id: string;
+  receiver_id?: string;
+  text: string;
+  timestamp: { seconds: number; nanoseconds: number } | Date;
+  read: boolean;
+  type: 'system' | 'manual';
 };
+
+    

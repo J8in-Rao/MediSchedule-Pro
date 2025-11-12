@@ -24,11 +24,27 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Patient } from '@/lib/types';
 import { format } from 'date-fns';
+import { useState } from 'react';
+import { PatientForm } from '@/components/patients/patient-form';
 
 export default function PatientsPage() {
   const firestore = useFirestore();
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   const { data: patients, isLoading } = useCollection<Patient>(patientsCollection);
+  
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | undefined>(undefined);
+
+  const handleAdd = () => {
+    setSelectedPatient(undefined);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsFormOpen(true);
+  };
+
 
   return (
     <>
@@ -36,6 +52,9 @@ export default function PatientsPage() {
         title="Patient Management"
         description="Manage patient records, including case details and admission dates."
       >
+        <Button onClick={handleAdd}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Patient
+        </Button>
       </PageHeader>
       <Card>
         <CardHeader>
@@ -46,12 +65,10 @@ export default function PatientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden w-[100px] sm:table-cell">
-                  <span className="sr-only">Image</span>
-                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Age</TableHead>
                 <TableHead>Gender</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Case
                 </TableHead>
@@ -67,19 +84,10 @@ export default function PatientsPage() {
               {isLoading && <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>}
               {!isLoading && patients?.map(patient => (
                 <TableRow key={patient.id}>
-                  <TableCell className="hidden sm:table-cell">
-                    <Image
-                      alt="Patient avatar"
-                      className="aspect-square rounded-full object-cover"
-                      height="64"
-                      src={patient.avatarUrl}
-                      width="64"
-                      data-ai-hint="person portrait"
-                    />
-                  </TableCell>
                   <TableCell className="font-medium">{patient.name}</TableCell>
                   <TableCell>{patient.age}</TableCell>
                   <TableCell>{patient.gender}</TableCell>
+                  <TableCell>{patient.contact}</TableCell>
                   <TableCell className="hidden md:table-cell max-w-xs truncate">
                     {patient.case_description}
                   </TableCell>
@@ -100,7 +108,7 @@ export default function PatientsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(patient)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem>View Details</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                       </DropdownMenuContent>
@@ -108,10 +116,24 @@ export default function PatientsPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!isLoading && patients?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    No patients found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+      <PatientForm 
+        isOpen={isFormOpen}
+        setIsOpen={setIsFormOpen}
+        patient={selectedPatient}
+      />
     </>
   );
 }
+
+    

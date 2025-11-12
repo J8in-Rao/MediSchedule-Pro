@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Resource } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
@@ -38,8 +38,9 @@ import { Switch } from '@/components/ui/switch';
 
 const resourceFormSchema = z.object({
   name: z.string().min(1, "Resource name is required"),
-  type: z.enum(['Drug', 'Instrument', 'Material']),
+  type: z.enum(['drug', 'instrument', 'material']),
   quantity: z.coerce.number().min(0, "Quantity must be a positive number"),
+  unit: z.string().optional(),
   in_use: z.boolean(),
 });
 
@@ -47,15 +48,21 @@ function ResourceForm({ isOpen, setIsOpen, resource }: { isOpen: boolean, setIsO
   const firestore = useFirestore();
   const form = useForm<z.infer<typeof resourceFormSchema>>({
     resolver: zodResolver(resourceFormSchema),
-    defaultValues: resource || { name: '', type: 'Instrument', quantity: 1, in_use: false },
+    defaultValues: resource || { name: '', type: 'instrument', quantity: 1, unit: '', in_use: false },
   });
   
   function onSubmit(values: z.infer<typeof resourceFormSchema>) {
+    const data = {
+      ...values,
+      created_at: serverTimestamp(),
+      last_used: serverTimestamp(), // Initially set to created time
+    };
+
     if (resource) {
-      setDocumentNonBlocking(doc(firestore, 'resources', resource.id), values, { merge: true });
+      setDocumentNonBlocking(doc(firestore, 'resources', resource.id), data, { merge: true });
       toast({ title: 'Resource Updated' });
     } else {
-      addDocumentNonBlocking(collection(firestore, 'resources'), values);
+      addDocumentNonBlocking(collection(firestore, 'resources'), data);
       toast({ title: 'Resource Added' });
     }
     setIsOpen(false);
@@ -90,26 +97,39 @@ function ResourceForm({ isOpen, setIsOpen, resource }: { isOpen: boolean, setIsO
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="Drug">Drug</SelectItem>
-                      <SelectItem value="Instrument">Instrument</SelectItem>
-                      <SelectItem value="Material">Material</SelectItem>
+                      <SelectItem value="drug">Drug</SelectItem>
+                      <SelectItem value="instrument">Instrument</SelectItem>
+                      <SelectItem value="material">Material</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="quantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quantity</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity</FormLabel>
+                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit</FormLabel>
+                    <FormControl><Input placeholder="e.g., ml, pcs" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="in_use"
@@ -178,6 +198,7 @@ export default function ResourcesPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Quantity</TableHead>
+                <TableHead>Unit</TableHead>
                 <TableHead>In Use</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -185,12 +206,13 @@ export default function ResourcesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>}
+              {isLoading && <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>}
               {!isLoading && resources?.map(resource => (
                 <TableRow key={resource.id}>
                   <TableCell className="font-medium">{resource.name}</TableCell>
-                  <TableCell>{resource.type}</TableCell>
+                  <TableCell className="capitalize">{resource.type}</TableCell>
                   <TableCell>{resource.quantity}</TableCell>
+                  <TableCell>{resource.unit || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge variant={resource.in_use ? 'destructive' : 'secondary'}>
                       {resource.in_use ? 'Yes' : 'No'}
@@ -215,7 +237,7 @@ export default function ResourcesPage() {
               ))}
                {!isLoading && resources?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No resources found.
                   </TableCell>
                 </TableRow>
@@ -228,3 +250,5 @@ export default function ResourcesPage() {
     </>
   );
 }
+
+    

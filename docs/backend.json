@@ -8,7 +8,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user."
+          "description": "Unique identifier for the user (matches Firebase Auth UID)."
         },
         "email": {
           "type": "string",
@@ -30,49 +30,36 @@
             "admin",
             "doctor"
           ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the user account was created."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the user account is active or disabled."
         }
       },
       "required": [
         "id",
         "email",
-        "role"
-      ]
-    },
-    "Admin": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Admin",
-      "type": "object",
-      "description": "Represents an administrator with full system access.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the admin, should be the same as the user ID."
-        },
-        "name": {
-          "type": "string",
-          "description": "The admin's full name."
-        },
-        "email": {
-          "type": "string",
-          "description": "Admin's login email.",
-          "format": "email"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "email"
+        "firstName",
+        "lastName",
+        "role",
+        "created_at",
+        "isActive"
       ]
     },
     "Doctor": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Doctor",
       "type": "object",
-      "description": "Represents a doctor with specific specializations and availability.",
+      "description": "Represents a doctor's professional profile.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the doctor, should be the same as the user ID."
+          "description": "Unique identifier for the doctor, same as the user ID."
         },
         "name": {
           "type": "string",
@@ -100,11 +87,20 @@
           "items": {
             "type": "string"
           },
-          "description": "Details regarding the doctor's availability."
+          "description": "Days of the week the doctor is available."
         },
         "avatarUrl": {
           "type": "string",
           "format": "uri"
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Whether the doctor's profile has been verified by an admin."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the doctor profile was created."
         }
       },
       "required": [
@@ -112,16 +108,18 @@
         "name",
         "email",
         "specialization",
-        "availability",
         "shift_hours",
-        "avatarUrl"
+        "availability",
+        "avatarUrl",
+        "verified",
+        "created_at"
       ]
     },
     "Patient": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Patient",
       "type": "object",
-      "description": "Represents a patient record, including pre- and post-operative information.",
+      "description": "Represents a patient record.",
       "properties": {
         "id": {
           "type": "string",
@@ -146,9 +144,21 @@
           "type": "string",
           "description": "Diagnosis or reason for operation."
         },
+        "contact": {
+          "type": "string",
+          "description": "Patient's contact information (phone or email)."
+        },
         "admitted_on": {
           "type": "string",
           "format": "date"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "UID of the admin who created the record."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
@@ -157,7 +167,9 @@
         "age",
         "gender",
         "case_description",
-        "admitted_on"
+        "admitted_on",
+        "created_by",
+        "created_at"
       ]
     },
     "OperationSchedule": {
@@ -167,41 +179,43 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "patientId": { "type": "string" },
-        "patientName": { "type": "string" },
-        "doctorId": { "type": "string" },
-        "doctorName": { "type": "string" },
-        "otId": { "type": "string" },
+        "doctor_id": { "type": "string", "description": "FK -> /doctors/{uid}" },
+        "patient_id": { "type": "string", "description": "FK -> /patients/{id}" },
+        "ot_id": { "type": "string", "description": "FK -> /ot_rooms/{id}" },
         "date": { "type": "string", "format": "date" },
-        "startTime": { "type": "string", "format": "time" },
-        "endTime": { "type": "string", "format": "time" },
+        "start_time": { "type": "string", "format": "time" },
+        "end_time": { "type": "string", "format": "time" },
         "procedure": { "type": "string" },
         "status": {
           "type": "string",
-          "enum": ["Scheduled", "Completed", "Cancelled", "In Progress"]
+          "enum": ["scheduled", "completed", "cancelled"]
         },
-        "anesthesiaType": { "type": "string" },
-        "anesthesiologistName": { "type": "string" },
-        "assistantSurgeon": { "type": "string" },
+        "anesthesia_type": { "type": "string" },
+        "anesthesiologist": { "type": "string" },
+        "assistant_surgeon": { "type": "string" },
         "nurses": { "type": "array", "items": { "type": "string" } },
         "remarks": { "type": "string" },
         "report_url": { "type": "string", "format": "uri" },
         "drugs_used": { "type": "array", "items": { "type": "string" } },
-        "instruments": { "type": "array", "items": { "type": "string" } }
+        "instruments": { "type": "array", "items": { "type": "string" } },
+        "created_by": { "type": "string", "description": "UID of the admin who created the schedule." },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
       },
       "required": [
-        "patientId",
-        "patientName",
-        "doctorId",
-        "doctorName",
-        "otId",
+        "doctor_id",
+        "patient_id",
+        "ot_id",
         "date",
-        "startTime",
-        "endTime",
+        "start_time",
+        "end_time",
         "procedure",
         "status",
-        "anesthesiaType",
-        "anesthesiologistName"
+        "anesthesia_type",
+        "anesthesiologist",
+        "created_by",
+        "created_at",
+        "updated_at"
       ]
     },
     "OperatingRoom": {
@@ -212,10 +226,12 @@
       "properties": {
         "id": { "type": "string" },
         "room_number": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "in-use"] },
         "capacity": { "type": "number" },
-        "status": { "type": "string", "enum": ["Available", "Occupied", "Maintenance"] }
+        "equipment": { "type": "array", "items": { "type": "string" } },
+        "created_at": { "type": "string", "format": "date-time" }
       },
-      "required": ["room_number", "status"]
+      "required": ["room_number", "status", "created_at"]
     },
     "Resource": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -225,11 +241,30 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "type": { "type": "string", "enum": ["Drug", "Instrument", "Material"] },
+        "type": { "type": "string", "enum": ["drug", "instrument", "material"] },
         "quantity": { "type": "number" },
-        "in_use": { "type": "boolean" }
+        "unit": { "type": "string" },
+        "in_use": { "type": "boolean" },
+        "last_used": { "type": "string", "format": "date-time" },
+        "created_at": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "type", "quantity", "in_use"]
+      "required": ["name", "type", "quantity", "in_use", "created_at"]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "description": "Represents a message in the system.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sender_id": { "type": "string" },
+        "receiver_id": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["system", "manual"] }
+      },
+      "required": ["sender_id", "text", "timestamp", "read", "type"]
     }
   },
   "auth": {
@@ -243,51 +278,53 @@
         "path": "/users/{userId}",
         "definition": {
           "schema": { "$ref": "#/entities/User" },
-          "description": "Stores user profiles including their role (admin or doctor)."
-        }
-      },
-      {
-        "path": "/admins/{adminId}",
-        "definition": {
-          "schema": { "$ref": "#/entities/Admin" },
-          "description": "Stores admin profiles."
+          "description": "Stores all user login accounts."
         }
       },
       {
         "path": "/doctors/{doctorId}",
         "definition": {
           "schema": { "$ref": "#/entities/Doctor" },
-          "description": "Stores detailed doctor profiles. Managed by admins."
+          "description": "Stores detailed doctor profiles."
         }
       },
       {
         "path": "/patients/{patientId}",
         "definition": {
           "schema": { "$ref": "#/entities/Patient" },
-          "description": "Stores patient records. Managed by admins."
+          "description": "Stores patient records."
         }
       },
       {
-        "path": "/operations/{operationId}",
-        "definition": {
-          "schema": { "$ref": "#/entities/OperationSchedule" },
-          "description": "Stores surgery schedules. Writable by admins, readable by assigned doctors."
-        }
-      },
-      {
-        "path": "/operating_rooms/{otId}",
+        "path": "/ot_rooms/{otId}",
         "definition": {
           "schema": { "$ref": "#/entities/OperatingRoom" },
-          "description": "Stores details of operating rooms. Managed by admins."
+          "description": "Stores details of operating rooms."
+        }
+      },
+      {
+        "path": "/operation_schedules/{operationId}",
+        "definition": {
+          "schema": { "$ref": "#/entities/OperationSchedule" },
+          "description": "Stores all surgery schedules."
         }
       },
       {
         "path": "/resources/{resourceId}",
         "definition": {
           "schema": { "$ref": "#/entities/Resource" },
-          "description": "Stores medical resources. Managed by admins."
+          "description": "Stores medical resources."
+        }
+      },
+      {
+        "path": "/messages/{messageId}",
+        "definition": {
+          "schema": { "$ref": "#/entities/Message" },
+          "description": "Stores system and user messages."
         }
       }
     ]
   }
 }
+
+    

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { OperatingRoom } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
@@ -33,26 +33,37 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { toast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
 
 const otFormSchema = z.object({
   room_number: z.string().min(1, "Room number is required"),
   capacity: z.coerce.number().optional(),
-  status: z.enum(['Available', 'Occupied', 'Maintenance']),
+  status: z.enum(['available', 'in-use']),
+  equipment: z.string().optional(),
 });
 
 function OTForm({ isOpen, setIsOpen, ot }: { isOpen: boolean, setIsOpen: (open: boolean) => void, ot?: OperatingRoom }) {
   const firestore = useFirestore();
   const form = useForm<z.infer<typeof otFormSchema>>({
     resolver: zodResolver(otFormSchema),
-    defaultValues: ot || { room_number: '', capacity: 0, status: 'Available' },
+    defaultValues: ot ? {
+      ...ot,
+      equipment: ot.equipment?.join(', '),
+    } : { room_number: '', capacity: 1, status: 'available', equipment: '' },
   });
   
   function onSubmit(values: z.infer<typeof otFormSchema>) {
+    const data = {
+      ...values,
+      equipment: values.equipment?.split(',').map(e => e.trim()).filter(e => e) || [],
+      created_at: serverTimestamp(),
+    };
+
     if (ot) {
-      setDocumentNonBlocking(doc(firestore, 'operating_rooms', ot.id), values, { merge: true });
+      setDocumentNonBlocking(doc(firestore, 'ot_rooms', ot.id), data, { merge: true });
       toast({ title: 'Operating Room Updated' });
     } else {
-      addDocumentNonBlocking(collection(firestore, 'operating_rooms'), values);
+      addDocumentNonBlocking(collection(firestore, 'ot_rooms'), data);
       toast({ title: 'Operating Room Added' });
     }
     setIsOpen(false);
@@ -98,11 +109,21 @@ function OTForm({ isOpen, setIsOpen, ot }: { isOpen: boolean, setIsOpen: (open: 
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="Available">Available</SelectItem>
-                      <SelectItem value="Occupied">Occupied</SelectItem>
-                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                      <SelectItem value="available">Available</SelectItem>
+                      <SelectItem value="in-use">In Use</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="equipment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Equipment (comma-separated)</FormLabel>
+                  <FormControl><Textarea {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -121,7 +142,7 @@ function OTForm({ isOpen, setIsOpen, ot }: { isOpen: boolean, setIsOpen: (open: 
 
 export default function OTsPage() {
   const firestore = useFirestore();
-  const otsCollection = useMemoFirebase(() => collection(firestore, 'operating_rooms'), [firestore]);
+  const otsCollection = useMemoFirebase(() => collection(firestore, 'ot_rooms'), [firestore]);
   const { data: ots, isLoading } = useCollection<OperatingRoom>(otsCollection);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedOt, setSelectedOt] = useState<OperatingRoom | undefined>(undefined);
@@ -170,7 +191,7 @@ export default function OTsPage() {
                   <TableCell className="font-medium">{ot.room_number}</TableCell>
                   <TableCell>{ot.capacity || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={ot.status === 'Available' ? 'secondary' : ot.status === 'Occupied' ? 'default' : 'destructive'}>
+                    <Badge variant={ot.status === 'available' ? 'secondary' : 'default'}>
                       {ot.status}
                     </Badge>
                   </TableCell>
@@ -191,6 +212,13 @@ export default function OTsPage() {
                   </TableCell>
                 </TableRow>
               ))}
+               {!isLoading && ots?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No operating rooms found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
