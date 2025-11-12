@@ -24,12 +24,26 @@ import { MoreHorizontal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Doctor } from '@/lib/types';
+import { useState } from 'react';
+import { StaffForm } from '@/components/staff/staff-form';
 
 
 export default function StaffPage() {
   const firestore = useFirestore();
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
   const { data: doctors, isLoading } = useCollection<Doctor>(doctorsCollection);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | undefined>(undefined);
+
+  const handleAdd = () => {
+    setSelectedDoctor(undefined);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (doctor: Doctor) => {
+    setSelectedDoctor(doctor);
+    setIsFormOpen(true);
+  };
 
   return (
     <>
@@ -37,7 +51,7 @@ export default function StaffPage() {
         title="Staff Management"
         description="Add, edit, and manage doctor details and availability."
       >
-        <Button>
+        <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Staff Member
         </Button>
       </PageHeader>
@@ -80,7 +94,7 @@ export default function StaffPage() {
                   <TableCell className="font-medium">{doctor.name}</TableCell>
                   <TableCell>{doctor.specialization}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       {doctor.availability.map(day => (
                         <Badge key={day} variant="secondary">{day}</Badge>
                       ))}
@@ -100,17 +114,29 @@ export default function StaffPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(doctor)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
+              {!isLoading && doctors?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No staff members found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+      <StaffForm 
+        isOpen={isFormOpen}
+        setIsOpen={setIsFormOpen}
+        doctor={selectedDoctor}
+      />
     </>
   );
 }
