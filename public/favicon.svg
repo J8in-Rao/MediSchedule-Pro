@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="hsl(207 65% 62%)" stroke="hsl(207 65% 62%)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2a.3.3 0 0 0-.2.3"/><path d="M8 8a4 4 0 1 0 8 0"/><path d="M9 13v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-7"/><path d="M12 3v1"/><path d="M9 2.3A.3.3 0 1 0 9 2a.3.3 0 0 0 0 .3"/><path d="M15 2.3A.3.3 0 1 0 15 2a.3.3 0 0 0 0 .3"/><path d="M12 13h.01"/></svg>
+<!-- stethoscope-cross-favicon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- background -->
+  <rect width="32" height="32" rx="6" fill="#ffffff" />
+  
+  <!-- stethoscope body -->
+  <path d="M10 7v6a4.5 4.5 0 0 0 9 0V7" fill="none" stroke="#0B74DE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10 22a4.5 4.5 0 0 0 9 0v-3.5" fill="none" stroke="#0B74DE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- stethoscope end circle -->
+  <circle cx="24" cy="22" r="2.6" fill="none" stroke="#0B74DE" stroke-width="2.2"/>
+
+  <!-- connector -->
+  <path d="M24 19v-6a2 2 0 0 0-2-2h-.5" fill="none" stroke="#0B74DE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- medical cross (+) -->
+  <g transform="translate(23 7)">
+    <rect x="-1.5" y="-3.5" width="3" height="7" rx="0.8" fill="#FF1744"/>
+    <rect x="-3.5" y="-1.5" width="7" height="3" rx="0.8" fill="#FF1744"/>
+  </g>
+</svg>
