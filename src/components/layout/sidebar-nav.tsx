@@ -15,7 +15,7 @@ import {
   Users,
   BarChart,
   Settings,
-  Bot
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '../shared/page-header';
@@ -27,6 +27,7 @@ const allNavItems = [
   { href: '/dashboard/doctors', icon: Stethoscope, label: 'Doctors', roles: ['doctor'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['doctor'] },
   { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['doctor'] },
+  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },
 ];
 
 type SidebarNavProps = {

@@ -12,6 +12,7 @@ import {
   Users,
   BarChart,
   User,
+  MessageSquare,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -45,6 +46,7 @@ const allMobileNavItems = [
   { href: '/dashboard/doctors', icon: Stethoscope, label: 'Doctors', roles: ['doctor'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['doctor'] },
   { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['doctor'] },
+  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },
 ];
 
 type HeaderProps = {

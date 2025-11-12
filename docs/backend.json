@@ -184,6 +184,22 @@
         "room",
         "status"
       ]
+    },
+    "SupportMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SupportMessage",
+      "description": "Represents a support message from a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string", "format": "email" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["New", "Read", "Resolved"] }
+      },
+      "required": ["userId", "userName", "userEmail", "message", "createdAt", "status"]
     }
   },
   "auth": {
@@ -231,6 +247,16 @@
             "$ref": "#/backend/entities/Surgery"
           },
           "description": "Stores surgery schedules. Accessible to all authenticated users."
+        }
+      },
+       {
+        "path": "/messages/{messageId}",
+        "definition": {
+          "entityName": "SupportMessage",
+          "schema": {
+            "$ref": "#/backend/entities/SupportMessage"
+          },
+          "description": "Stores support messages from users. Writable by patients, readable by doctors."
         }
       }
     ]

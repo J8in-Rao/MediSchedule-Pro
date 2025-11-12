@@ -39,6 +39,11 @@ service cloud.firestore {
        // Allow write only if user is a doctor
       allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
     }
+
+    match /messages/{messageId} {
+        allow create: if isSignedIn();
+        allow read, update: if isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
+    }
     
     match /roles/{roleId} {
       allow read: if isSignedIn();

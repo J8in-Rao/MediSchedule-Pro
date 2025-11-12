@@ -15,9 +15,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { toast } from '@/hooks/use-toast';
+import { collection, serverTimestamp, doc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
+import React from 'react';
 
 const faqs = [
   {
@@ -43,6 +48,54 @@ const faqs = [
 ];
 
 export default function SupportPage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const message = formData.get('message') as string;
+
+    if (!message.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Message cannot be empty.',
+      });
+      return;
+    }
+
+    if (!user || !userProfile) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to send a message.',
+      });
+      return;
+    }
+
+    const messagesCollection = collection(firestore, 'messages');
+    addDocumentNonBlocking(messagesCollection, {
+      userId: user.uid,
+      userName: `${userProfile.firstName} ${userProfile.lastName}`,
+      userEmail: userProfile.email,
+      message: message,
+      createdAt: serverTimestamp(),
+      status: 'New',
+    });
+
+    toast({
+      title: 'Message Sent',
+      description: "We've received your message and will get back to you shortly.",
+    });
+
+    form.reset();
+  };
+
+
   return (
     <>
       <PageHeader
@@ -81,24 +134,13 @@ export default function SupportPage() {
             <CardContent>
               <form
                 className="space-y-4"
-                onSubmit={(e) => e.preventDefault()}
+                onSubmit={handleSubmit}
               >
-                <div className="space-y-2">
-                  <Label htmlFor="name">Your Name</Label>
-                  <Input id="name" placeholder="John Doe" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Your Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
                   <Textarea
                     id="message"
+                    name="message"
                     placeholder="Please describe your issue..."
                     rows={5}
                   />

@@ -51,3 +51,16 @@ export type SurgeryByType = {
   count: number;
   fill: string;
 };
+
+export type SupportMessage = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  message: string;
+  createdAt: {
+    seconds: number;
+    nanoseconds: number;
+  } | Date;
+  status: 'New' | 'Read' | 'Resolved';
+}
