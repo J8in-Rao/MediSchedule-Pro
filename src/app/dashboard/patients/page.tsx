@@ -36,9 +36,6 @@ export default function PatientsPage() {
         title="Patient Management"
         description="Manage patient records, including case details and admission dates."
       >
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Patient
-        </Button>
       </PageHeader>
       <Card>
         <CardHeader>
@@ -118,5 +115,3 @@ export default function PatientsPage() {
     </>
   );
 }
-
-    

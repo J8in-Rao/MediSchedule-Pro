@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useAuth, useFirestore } from "@/firebase";
-import { doc, collection } from 'firebase/firestore';
-import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { toast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -42,15 +42,6 @@ const formSchema = z.object({
   availability: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one day.',
   }),
-}).refine(data => {
-    // Password is only required when creating a new user (doctor is undefined)
-    if (!data.password) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Password is required for new staff members.",
-    path: ["password"],
 });
 
 
@@ -65,11 +56,17 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
     const firestore = useFirestore();
     
     // Adjust schema based on whether we are editing or creating
-    const finalSchema = doctor ? formSchema.omit({ password: true }) : formSchema;
+    const finalSchema = doctor ? formSchema.omit({ password: true }) : formSchema.refine(data => data.password, {
+        message: "Password is required for new staff members.",
+        path: ["password"],
+    });
 
     const form = useForm<z.infer<typeof finalSchema>>({
         resolver: zodResolver(finalSchema),
-        defaultValues: doctor || {
+        defaultValues: doctor ? {
+          ...doctor,
+          phone: doctor.phone || '',
+        } : {
             name: "",
             email: "",
             password: "",
@@ -94,20 +91,32 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
                 availability: values.availability,
             }, { merge: true });
 
+            const userRef = doc(firestore, "users", doctor.id);
+            const [firstName, ...lastName] = values.name.split(' ');
+            setDocumentNonBlocking(userRef, {
+                email: values.email,
+                firstName,
+                lastName: lastName.join(' '),
+            }, { merge: true });
+
+
             toast({ title: "Staff Updated", description: `${values.name}'s profile has been updated.` });
 
         } else {
             // Creating new doctor
-            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password!);
+            // This requires values to have a password, ensured by the schema refinement.
+            const newDoctorValues = values as z.infer<typeof formSchema>;
+            
+            const userCredential = await createUserWithEmailAndPassword(auth, newDoctorValues.email, newDoctorValues.password!);
             const user = userCredential.user;
 
-            const [firstName, ...lastName] = values.name.split(' ');
+            const [firstName, ...lastName] = newDoctorValues.name.split(' ');
 
             // Create user profile doc
             const userRef = doc(firestore, "users", user.uid);
             setDocumentNonBlocking(userRef, {
                 id: user.uid,
-                email: values.email,
+                email: newDoctorValues.email,
                 firstName: firstName,
                 lastName: lastName.join(' '),
                 role: 'doctor'
@@ -117,16 +126,16 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
             const doctorRef = doc(firestore, "doctors", user.uid);
             setDocumentNonBlocking(doctorRef, {
                 id: user.uid,
-                name: values.name,
-                email: values.email,
-                specialization: values.specialization,
-                phone: values.phone,
-                shift_hours: values.shift_hours,
-                availability: values.availability,
+                name: newDoctorValues.name,
+                email: newDoctorValues.email,
+                specialization: newDoctorValues.specialization,
+                phone: newDoctorValues.phone,
+                shift_hours: newDoctorValues.shift_hours,
+                availability: newDoctorValues.availability,
                 avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
             }, { merge: true });
 
-            toast({ title: "Staff Added", description: `${values.name} has been added to the staff.` });
+            toast({ title: "Staff Added", description: `${newDoctorValues.name} has been added to the staff.` });
         }
         setIsOpen(false);
         form.reset();

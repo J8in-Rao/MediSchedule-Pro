@@ -123,10 +123,6 @@
         "admitted_on": {
           "type": "string",
           "format": "date"
-        },
-        "avatarUrl": {
-          "type": "string",
-          "format": "uri"
         }
       },
       "required": [
@@ -135,8 +131,7 @@
         "age",
         "gender",
         "case_description",
-        "admitted_on",
-        "avatarUrl"
+        "admitted_on"
       ]
     },
     "OperationSchedule": {
@@ -263,5 +258,3 @@
     ]
   }
 }
-
-    
