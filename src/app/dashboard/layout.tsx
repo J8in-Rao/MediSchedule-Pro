@@ -6,7 +6,7 @@ import { doc } from 'firebase/firestore';
 
 interface UserProfile {
   id: string;
-  role: 'doctor' | 'patient';
+  role: 'admin' | 'patient';
 }
 
 export default function DashboardLayout({

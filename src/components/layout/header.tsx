@@ -13,6 +13,7 @@ import {
   BarChart,
   User,
   MessageSquare,
+  ShieldCheck,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -40,17 +41,17 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 
 const allMobileNavItems = [
-  { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
+  { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
   { href: '/dashboard/patient', icon: LayoutGrid, label: 'Dashboard', roles: ['patient'] },
-  { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['doctor'] },
-  { href: '/dashboard/doctors', icon: Stethoscope, label: 'Doctors', roles: ['doctor'] },
-  { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['doctor'] },
-  { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['doctor'] },
-  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },
+  { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
+  { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
+  { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },
+  { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['admin'] },
+  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['admin'] },
 ];
 
 type HeaderProps = {
-  userRole?: 'doctor' | 'patient';
+  userRole?: 'admin' | 'patient';
 };
 
 export default function Header({ userRole }: HeaderProps) {
@@ -60,7 +61,7 @@ export default function Header({ userRole }: HeaderProps) {
   const pathParts = pathname.split('/').filter(Boolean);
 
   const mobileNavItems = allMobileNavItems.filter(item => userRole && item.roles.includes(userRole));
-  const dashboardHref = userRole === 'doctor' ? '/dashboard/doctor' : '/dashboard/patient';
+  const dashboardHref = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/patient';
 
   const handleLogout = async () => {
     try {
@@ -79,7 +80,7 @@ export default function Header({ userRole }: HeaderProps) {
     }
   };
 
-  const ProfileIcon = userRole === 'doctor' ? Stethoscope : User;
+  const ProfileIcon = userRole === 'admin' ? ShieldCheck : User;
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">

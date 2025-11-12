@@ -11,7 +11,7 @@ interface UserProfile {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'doctor' | 'patient';
+  role: 'admin' | 'patient';
 }
 
 export default function DashboardRedirectPage() {
@@ -36,8 +36,8 @@ export default function DashboardRedirectPage() {
 
     if (userProfile) {
       // Redirect based on the user's role
-      if (userProfile.role === 'doctor') {
-        router.replace('/dashboard/doctor');
+      if (userProfile.role === 'admin') {
+        router.replace('/dashboard/admin');
       } else if (userProfile.role === 'patient') {
         router.replace('/dashboard/patient');
       } else {

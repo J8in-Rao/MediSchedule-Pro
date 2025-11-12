@@ -24,25 +24,25 @@ service cloud.firestore {
     // Doctors, Patients, and Surgeries can be read by any authenticated user
     match /doctors/{doctorId} {
       allow read: if isSignedIn();
-      // Allow write only if user is a doctor
-      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
+      // Allow write only if user is an admin
+      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
     }
 
     match /patients/{patientId} {
       allow read: if isSignedIn();
-       // Allow write only if user is a doctor
-      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
+       // Allow write only if user is an admin
+      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
     }
 
     match /surgeries/{surgeryId} {
       allow read: if isSignedIn();
-       // Allow write only if user is a doctor
-      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
+       // Allow write only if user is an admin
+      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
     }
 
     match /messages/{messageId} {
         allow create: if isSignedIn();
-        allow read, update: if isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
+        allow read, update: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
     }
     
     match /roles/{roleId} {

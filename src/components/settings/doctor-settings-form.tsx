@@ -86,8 +86,8 @@ export default function DoctorSettingsForm({ userProfile, doctorProfile }: Docto
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Doctor Profile</CardTitle>
-        <CardDescription>Update your professional information here.</CardDescription>
+        <CardTitle>Admin Profile</CardTitle>
+        <CardDescription>Update your professional information here. This is visible to other staff.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>

@@ -3,7 +3,7 @@ export type UserProfile = {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'doctor' | 'patient';
+  role: 'admin' | 'patient';
 };
 
 export type Doctor = {

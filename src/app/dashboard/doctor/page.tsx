@@ -25,7 +25,7 @@ function getStatusBadgeVariant(status: Surgery['status']) {
   }
 }
 
-export default function DoctorDashboardPage() {
+export default function AdminDashboardPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const firestore = useFirestore();
 

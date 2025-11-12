@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import DoctorSettingsForm from '@/components/settings/doctor-settings-form';
 import PatientSettingsForm from '@/components/settings/patient-settings-form';
 import type { UserProfile, Doctor, Patient } from '@/lib/types';
+import React from 'react';
 
 export default function SettingsPage() {
   const { user, isUserLoading } = useUser();
@@ -32,7 +33,7 @@ export default function SettingsPage() {
       <div className="grid gap-6">
         {isLoading ? (
           <p>Loading settings...</p>
-        ) : userProfile?.role === 'doctor' ? (
+        ) : userProfile?.role === 'admin' ? (
           <DoctorSettingsForm userProfile={userProfile} doctorProfile={doctorProfile} />
         ) : userProfile?.role === 'patient' ? (
           <PatientSettingsForm userProfile={userProfile} patientProfile={patientProfile} />

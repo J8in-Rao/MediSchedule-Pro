@@ -28,7 +28,7 @@
           "type": "string",
           "description": "The role of the user.",
           "enum": [
-            "doctor",
+            "admin",
             "patient"
           ]
         }
@@ -239,7 +239,7 @@
           "schema": {
             "$ref": "#/backend/entities/SupportMessage"
           },
-          "description": "Stores support messages from users. Writable by patients, readable by doctors."
+          "description": "Stores support messages from users. Writable by patients, readable by admins."
         }
       }
     ]

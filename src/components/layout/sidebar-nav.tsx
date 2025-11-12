@@ -21,24 +21,24 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '../shared/page-header';
 
 const allNavItems = [
-  { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
+  { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
   { href: '/dashboard/patient', icon: LayoutGrid, label: 'Dashboard', roles: ['patient'] },
-  { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['doctor'] },
-  { href: '/dashboard/doctors', icon: Stethoscope, label: 'Doctors', roles: ['doctor'] },
-  { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['doctor'] },
-  { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['doctor'] },
-  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },
+  { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
+  { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
+  { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },
+  { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['admin'] },
+  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['admin'] },
 ];
 
 type SidebarNavProps = {
-  userRole?: 'doctor' | 'patient';
+  userRole?: 'admin' | 'patient';
 };
 
 export default function SidebarNav({ userRole }: SidebarNavProps) {
   const pathname = usePathname();
 
   const navItems = allNavItems.filter(item => userRole && item.roles.includes(userRole));
-   const dashboardHref = userRole === 'doctor' ? '/dashboard/doctor' : '/dashboard/patient';
+   const dashboardHref = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/patient';
 
 
   return (

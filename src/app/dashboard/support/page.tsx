@@ -38,12 +38,12 @@ const faqs = [
   {
     question: 'Who can see my patient data?',
     answer:
-      'Patient data is confidential and is only accessible by authorized healthcare professionals, such as doctors and administrators, who are involved in your care. Your privacy is our top priority.',
+      'Patient data is confidential and is only accessible by authorized healthcare professionals, such as admins and administrators, who are involved in your care. Your privacy is our top priority.',
   },
   {
     question: 'How do I cancel a scheduled surgery?',
     answer:
-      'Doctors can cancel or reschedule a surgery directly from the "Schedule" page. If you are a patient, please contact your doctor’s office directly to make any changes to your appointment.',
+      'Admins can cancel or reschedule a surgery directly from the "Schedule" page. If you are a patient, please contact your doctor’s office directly to make any changes to your appointment.',
   },
 ];
 

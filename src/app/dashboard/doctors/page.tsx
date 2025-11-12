@@ -26,7 +26,7 @@ import { collection } from 'firebase/firestore';
 import type { Doctor } from '@/lib/types';
 
 
-export default function DoctorsPage() {
+export default function StaffPage() {
   const firestore = useFirestore();
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
   const { data: doctors, isLoading } = useCollection<Doctor>(doctorsCollection);
@@ -34,16 +34,16 @@ export default function DoctorsPage() {
   return (
     <>
       <PageHeader
-        title="Doctor Management"
+        title="Staff Management"
         description="Add, edit, and manage doctor details and availability."
       >
         <Button>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Doctor
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Staff Member
         </Button>
       </PageHeader>
       <Card>
         <CardHeader>
-          <CardTitle>Doctors List</CardTitle>
+          <CardTitle>Staff List</CardTitle>
           <CardDescription>A list of all doctors in the system.</CardDescription>
         </CardHeader>
         <CardContent>
