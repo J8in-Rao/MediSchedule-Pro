@@ -10,44 +10,62 @@ import {
   ChartLegend,
   ChartLegendContent
 } from "@/components/ui/chart"
-import { surgeryByTpeData } from "@/lib/data"
 import { ChartConfig } from "@/components/ui/chart"
+import type { OperationSchedule, Doctor } from "@/lib/types"
 
-const chartConfig = {
-  surgeries: {
-    label: "Surgeries",
-  },
-  Cardiology: {
-    label: "Cardiology",
-    color: "hsl(var(--chart-1))",
-  },
-  Neurology: {
-    label: "Neurology",
-    color: "hsl(var(--chart-2))",
-  },
-  Orthopedics: {
-    label: "Orthopedics",
-    color: "hsl(var(--chart-3))",
-  },
-  General: {
-    label: "General",
-    color: "hsl(var(--chart-4))",
-  },
-  Other: {
-    label: "Other",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig
+const chartColors = {
+  Cardiology: "hsl(var(--chart-1))",
+  Neurology: "hsl(var(--chart-2))",
+  Orthopedics: "hsl(var(--chart-3))",
+  "General Surgery": "hsl(var(--chart-4))",
+  Other: "hsl(var(--chart-5))",
+} as const;
 
-export default function SurgeriesByTypeChart() {
-  const totalSurgeries = React.useMemo(() => {
-    return surgeryByTpeData.reduce((acc, curr) => acc + curr.count, 0)
-  }, [])
+type Specialization = keyof typeof chartColors;
+
+type SurgeriesByTypeChartProps = {
+  surgeries: OperationSchedule[];
+  doctors: Doctor[];
+}
+
+export default function SurgeriesByTypeChart({ surgeries, doctors }: SurgeriesByTypeChartProps) {
+  const { data, config } = React.useMemo(() => {
+    const doctorMap = new Map(doctors.map(doc => [doc.id, doc.specialization]));
+
+    const surgeriesBySpecialization = surgeries.reduce((acc, surgery) => {
+      const specialization = doctorMap.get(surgery.doctorId) || 'Other';
+      const specKey: Specialization = Object.keys(chartColors).includes(specialization) ? specialization as Specialization : 'Other';
+      acc[specKey] = (acc[specKey] || 0) + 1;
+      return acc;
+    }, {} as Record<Specialization, number>);
+
+    const chartData = Object.entries(surgeriesBySpecialization).map(([type, count]) => ({
+      type: type as Specialization,
+      count,
+      fill: chartColors[type as Specialization],
+    }));
+
+    const chartConfig: ChartConfig = Object.keys(chartColors).reduce((acc, key) => {
+      acc[key] = {
+        label: key,
+        color: chartColors[key as Specialization],
+      };
+      return acc;
+    }, {
+      surgeries: { label: "Surgeries" }
+    } as ChartConfig);
+
+    return { data: chartData, config: chartConfig };
+  }, [surgeries, doctors]);
+
+  if (!surgeries || surgeries.length === 0) {
+    return <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">No data available to display.</div>;
+  }
 
   return (
     <div className="h-[350px] w-full">
         <ChartContainer
-            config={chartConfig}
+            config={config}
             className="mx-auto aspect-square h-full"
         >
             <PieChart>
@@ -56,13 +74,13 @@ export default function SurgeriesByTypeChart() {
                     content={<ChartTooltipContent hideLabel />}
                 />
                 <Pie
-                    data={surgeryByTpeData}
+                    data={data}
                     dataKey="count"
                     nameKey="type"
                     innerRadius={60}
                     strokeWidth={5}
                 >
-                    {surgeryByTpeData.map((entry, index) => (
+                    {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                 </Pie>

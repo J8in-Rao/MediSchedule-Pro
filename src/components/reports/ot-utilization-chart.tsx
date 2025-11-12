@@ -5,44 +5,61 @@ import {
   ChartContainer,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { otUtilizationData } from "@/lib/data"
 import { ChartConfig } from "@/components/ui/chart"
+import type { OperationSchedule } from "@/lib/types";
+import { useMemo } from "react";
 
-const chartConfig = {
-  "OT 1": {
-    label: "OT 1",
-    color: "hsl(var(--chart-1))",
-  },
-  "OT 2": {
-    label: "OT 2",
-    color: "hsl(var(--chart-2))",
-  },
-  "OT 3": {
-    label: "OT 3",
-    color: "hsl(var(--chart-3))",
-  },
-} satisfies ChartConfig
+const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
-export default function OtUtilizationChart() {
+type OtUtilizationChartProps = {
+  surgeries: OperationSchedule[];
+}
+
+export default function OtUtilizationChart({ surgeries }: OtUtilizationChartProps) {
+  const { data, config } = useMemo(() => {
+    const utilization = surgeries.reduce((acc, surgery) => {
+      const roomKey = `OT ${surgery.otId}`;
+      acc[roomKey] = (acc[roomKey] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const chartData = [{ name: 'Total Surgeries', ...utilization }];
+
+    const chartConfig: ChartConfig = Object.keys(utilization).reduce((acc, key, index) => {
+      acc[key] = {
+        label: key,
+        color: chartColors[index % chartColors.length],
+      };
+      return acc;
+    }, {} as ChartConfig);
+
+    return { data: chartData, config: chartConfig };
+  }, [surgeries]);
+
+
+  if (!surgeries || surgeries.length === 0) {
+    return <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">No data available to display.</div>;
+  }
+
   return (
     <div className="h-[350px] w-full">
-      <ChartContainer config={chartConfig} className="w-full h-full">
-        <BarChart data={otUtilizationData} accessibilityLayer>
+      <ChartContainer config={config} className="w-full h-full">
+        <BarChart data={data} accessibilityLayer>
           <CartesianGrid vertical={false} />
           <XAxis
-            dataKey="month"
+            dataKey="name"
             tickLine={false}
             tickMargin={10}
             axisLine={false}
           />
           <YAxis 
-            tickFormatter={(value) => `${value}%`}
+            allowDecimals={false}
           />
           <Tooltip cursor={false} content={<ChartTooltipContent />} />
           <Legend />
-          <Bar dataKey="OT 1" fill="var(--color-OT 1)" radius={4} />
-          <Bar dataKey="OT 2" fill="var(--color-OT 2)" radius={4} />
-          <Bar dataKey="OT 3" fill="var(--color-OT 3)" radius={4} />
+          {Object.keys(config).map((key) => (
+             <Bar key={key} dataKey={key} fill={`var(--color-${key})`} radius={4} />
+          ))}
         </BarChart>
       </ChartContainer>
     </div>
