@@ -1,0 +1,238 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the MediSchedule Pro application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user.",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user.",
+          "enum": [
+            "doctor",
+            "patient"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role"
+      ]
+    },
+    "Doctor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Doctor",
+      "type": "object",
+      "description": "Represents a doctor with specific specializations and availability.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the doctor, should be the same as the user ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The doctor's full name."
+        },
+        "specialization": {
+          "type": "string",
+          "description": "The doctor's medical specialization."
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Details regarding the doctor's availability."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "specialization",
+        "availability",
+        "avatarUrl"
+      ]
+    },
+    "Patient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Patient",
+      "type": "object",
+      "description": "Represents a patient record, including pre- and post-operative information.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the patient, should be the same as the user ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The patient's name."
+        },
+        "age": {
+          "type": "number"
+        },
+        "gender": {
+          "type": "string",
+          "enum": [
+            "Male",
+            "Female",
+            "Other"
+          ]
+        },
+        "preOpInfo": {
+          "type": "string",
+          "description": "Information gathered before the operation."
+        },
+        "postOpInfo": {
+          "type": "string",
+          "description": "Information collected after the operation."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "age",
+        "gender",
+        "avatarUrl"
+      ]
+    },
+    "Surgery": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Surgery",
+      "description": "Represents a scheduled surgery.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "patientId": {
+          "type": "string"
+        },
+        "patientName": {
+          "type": "string"
+        },
+        "doctorId": {
+          "type": "string"
+        },
+        "doctorName": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "time"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "time"
+        },
+        "procedure": {
+          "type": "string"
+        },
+        "room": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Scheduled",
+            "Completed",
+            "Cancelled",
+            "In Progress"
+          ]
+        }
+      },
+      "required": [
+        "patientId",
+        "patientName",
+        "doctorId",
+        "doctorName",
+        "date",
+        "startTime",
+        "endTime",
+        "procedure",
+        "room",
+        "status"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles including their role. Accessible only to the user themselves."
+        }
+      },
+      {
+        "path": "/doctors/{doctorId}",
+        "definition": {
+          "entityName": "Doctor",
+          "schema": {
+            "$ref": "#/backend/entities/Doctor"
+          },
+          "description": "Stores doctor profiles. Accessible to all authenticated users for reading."
+        }
+      },
+      {
+        "path": "/patients/{patientId}",
+        "definition": {
+          "entityName": "Patient",
+          "schema": {
+            "$ref": "#/backend/entities/Patient"
+          },
+          "description": "Stores patient records. Accessible to all authenticated users for reading."
+        }
+      },
+      {
+        "path": "/surgeries/{surgeryId}",
+        "definition": {
+          "entityName": "Surgery",
+          "schema": {
+            "$ref": "#/backend/entities/Surgery"
+          },
+          "description": "Stores surgery schedules. Accessible to all authenticated users."
+        }
+      }
+    ]
+  }
+}

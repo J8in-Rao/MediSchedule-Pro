@@ -1,0 +1,34 @@
+import Image from 'next/image';
+import Link from 'next/link';
+
+import { LoginForm } from '@/components/auth/login-form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Stethoscope } from 'lucide-react';
+
+export default function LoginPage() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="w-full max-w-md p-4">
+        <Card className="shadow-2xl">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Stethoscope className="w-8 h-8 text-primary" />
+              <h1 className="text-2xl font-bold text-primary">MediSchedule Pro</h1>
+            </div>
+            <CardTitle className="text-2xl">Welcome Back</CardTitle>
+            <CardDescription>Enter your credentials to access your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LoginForm />
+            <div className="mt-4 text-sm text-center">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="underline text-primary">
+                Sign up
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
