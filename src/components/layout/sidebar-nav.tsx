@@ -15,9 +15,9 @@ import {
   Users,
   BarChart,
   Settings,
-  Bot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '../shared/page-header';
 
 const allNavItems = [
   { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
@@ -47,7 +47,7 @@ export default function SidebarNav({ userRole }: SidebarNavProps) {
             href={dashboardHref}
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
-            <Bot className="h-5 w-5 transition-all group-hover:scale-110" />
+            <Stethoscope className="h-5 w-5 transition-all group-hover:scale-110" />
             <span className="sr-only">MediSchedule Pro</span>
           </Link>
 
