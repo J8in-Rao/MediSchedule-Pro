@@ -106,8 +106,8 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
             // This requires values to have a password, ensured by the schema refinement.
             const newDoctorValues = values as z.infer<typeof formSchema>;
             
-            const userCredential = await createAuthUser(newDoctorValues.email, newDoctorValues.password!);
-            const user = userCredential.user;
+            const serializableUserCredential = await createAuthUser(newDoctorValues.email, newDoctorValues.password!);
+            const user = serializableUserCredential.user;
 
             const [firstName, ...lastName] = newDoctorValues.name.split(' ');
 

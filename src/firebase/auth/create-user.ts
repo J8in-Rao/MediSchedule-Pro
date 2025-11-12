@@ -1,11 +1,21 @@
 "use server";
 
 import { initializeApp, deleteApp, FirebaseApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, UserCredential } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { firebaseConfig } from "../config";
 
+// Define a plain, serializable user object to return to the client
+interface SerializableUser {
+  uid: string;
+}
+
+interface SerializableUserCredential {
+  user: SerializableUser;
+}
+
+
 // A function to create a user in Firebase Auth without affecting the current session.
-export async function createAuthUser(email: string, password: string): Promise<UserCredential> {
+export async function createAuthUser(email: string, password: string): Promise<SerializableUserCredential> {
   const tempAppName = `temp-user-creation-${Date.now()}`;
   let tempApp: FirebaseApp | undefined;
 
@@ -16,8 +26,14 @@ export async function createAuthUser(email: string, password: string): Promise<U
 
     // Create the user with the temporary auth instance.
     const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
+    const user = userCredential.user;
 
-    return userCredential;
+    // Return only the serializable user data needed by the client
+    return {
+      user: {
+        uid: user.uid,
+      },
+    };
   } catch (error) {
     // Forward any errors from the user creation process.
     throw error;
