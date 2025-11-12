@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Doctor, Patient, Surgery } from "@/lib/types";
+import { Doctor, Patient, OperationSchedule } from "@/lib/types";
 import { useState } from "react";
 import { ScheduleForm } from "./schedule-form";
 
@@ -24,7 +24,7 @@ type GetColumnsProps = {
   patients: Patient[];
 }
 
-const getStatusBadgeVariant = (status: Surgery['status']) => {
+const getStatusBadgeVariant = (status: OperationSchedule['status']) => {
   switch (status) {
     case 'Completed': return 'secondary';
     case 'In Progress': return 'default';
@@ -34,7 +34,7 @@ const getStatusBadgeVariant = (status: Surgery['status']) => {
   }
 }
 
-export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<Surgery>[] => [
+export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<OperationSchedule>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -80,14 +80,15 @@ export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<Su
     cell: ({ row }) => `${row.original.startTime} - ${row.original.endTime}`,
   },
   {
-    accessorKey: "room",
+    accessorKey: "otId",
     header: "Room",
+    cell: ({ row }) => `OT-${row.original.otId}`,
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue("status") as Surgery['status'];
+      const status = row.getValue("status") as OperationSchedule['status'];
       return <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>;
     },
   },
@@ -112,11 +113,11 @@ export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<Su
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(surgery.id)}
             >
-              Copy Surgery ID
+              Copy Operation ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsFormOpen(true)}>Edit Surgery</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Delete Surgery</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsFormOpen(true)}>Edit Operation</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive">Delete Operation</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <ScheduleForm 
@@ -131,3 +132,5 @@ export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<Su
     },
   },
 ];
+
+    

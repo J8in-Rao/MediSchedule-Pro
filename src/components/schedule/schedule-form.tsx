@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { doc } from 'firebase/firestore';
+import { doc, collection } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,11 +38,10 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Doctor, Patient, Surgery } from "@/lib/types";
+import { Doctor, Patient, OperationSchedule, OperatingRoom } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection } from "firebase/firestore";
 import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
@@ -52,15 +51,15 @@ const formSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
   startTime: z.string().regex(/^([01]\\d|2[0-3]):([0-5]\\d)$/, "Invalid time format (HH:MM)"),
   endTime: z.string().regex(/^([01]\\d|2[0-3]):([0-5]\\d)$/, "Invalid time format (HH:MM)"),
-  room: z.string().min(1, "Room is required"),
+  otId: z.string().min(1, "Room is required"),
   anesthesiaType: z.string().min(1, "Anesthesia type is required"),
   anesthesiologistName: z.string().min(1, "Anesthesiologist name is required"),
   assistantSurgeon: z.string().optional(),
   nurses: z.string().optional(),
-  preOpNotes: z.string().optional(),
-  postOpNotes: z.string().optional(),
-  doctorRemarks: z.string().optional(),
-  specialRequirements: z.string().optional(),
+  remarks: z.string().optional(),
+  report_url: z.string().url().optional().or(z.literal('')),
+  drugs_used: z.string().optional(),
+  instruments: z.string().optional(),
 });
 
 type ScheduleFormProps = {
@@ -68,17 +67,23 @@ type ScheduleFormProps = {
   setIsOpen: (open: boolean) => void;
   doctors: Doctor[];
   patients: Patient[];
-  surgery?: Surgery;
+  surgery?: OperationSchedule;
 };
 
 export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: ScheduleFormProps) {
   const firestore = useFirestore();
+  
+  const otCollection = useMemoFirebase(() => collection(firestore, 'operating_rooms'), [firestore]);
+  const { data: operatingRooms } = useCollection<OperatingRoom>(otCollection);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: surgery ? {
       ...surgery,
       date: new Date(surgery.date),
       nurses: surgery.nurses?.join(', '),
+      drugs_used: surgery.drugs_used?.join(', '),
+      instruments: surgery.instruments?.join(', '),
     } : {
       procedure: "",
       patientId: "",
@@ -86,15 +91,15 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
       date: new Date(),
       startTime: "",
       endTime: "",
-      room: "",
+      otId: "",
       anesthesiaType: "",
       anesthesiologistName: "",
       assistantSurgeon: "",
       nurses: "",
-      preOpNotes: "",
-      postOpNotes: "",
-      doctorRemarks: "",
-      specialRequirements: "",
+      remarks: "",
+      report_url: "",
+      drugs_used: "",
+      instruments: "",
     },
   });
   
@@ -114,19 +119,20 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
       patientName: patient.name,
       status: surgery?.status || 'Scheduled',
       nurses: values.nurses?.split(',').map(n => n.trim()).filter(n => n),
-      equipment: surgery?.equipment || [],
+      drugs_used: values.drugs_used?.split(',').map(d => d.trim()).filter(d => d),
+      instruments: values.instruments?.split(',').map(i => i.trim()).filter(i => i),
     };
 
     if (surgery) {
-      const surgeryRef = doc(firestore, "surgeries", surgery.id);
+      const surgeryRef = doc(firestore, "operations", surgery.id);
       setDocumentNonBlocking(surgeryRef, surgeryData, { merge: true });
     } else {
-      addDocumentNonBlocking(collection(firestore, 'surgeries'), surgeryData);
+      addDocumentNonBlocking(collection(firestore, 'operations'), surgeryData);
     }
     
     toast({
-      title: surgery ? "Surgery Updated" : "Surgery Scheduled",
-      description: `The surgery "${values.procedure}" has been successfully saved.`,
+      title: surgery ? "Operation Updated" : "Operation Scheduled",
+      description: `The operation "${values.procedure}" has been successfully saved.`,
     });
     setIsOpen(false);
     form.reset();
@@ -136,7 +142,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{surgery ? "Edit Surgery" : "Schedule New Surgery"}</DialogTitle>
+          <DialogTitle>{surgery ? "Edit Operation" : "Schedule New Operation"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-6">
@@ -267,7 +273,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
             </div>
              <FormField
                 control={form.control}
-                name="room"
+                name="otId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Operating Room</FormLabel>
@@ -278,10 +284,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="OT 1">OT 1</SelectItem>
-                        <SelectItem value="OT 2">OT 2</SelectItem>
-                        <SelectItem value="OT 3">OT 3</SelectItem>
-                        <SelectItem value="OT 4">OT 4</SelectItem>
+                        {operatingRooms?.map(ot => (
+                           <SelectItem key={ot.id} value={ot.id}>{ot.room_number}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -323,7 +328,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                   <FormItem>
                     <FormLabel>Assistant Surgeon</FormLabel>
                     <FormControl>
-                      <Input placeholder="Dr. Alex Ray" {...field} />
+                      <Input placeholder="Dr. Alex Ray (Optional)" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -336,7 +341,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                   <FormItem>
                     <FormLabel>Nurses</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nurse 1, Nurse 2, ..." {...field} />
+                      <Input placeholder="Nurse 1, Nurse 2, ... (comma-separated)" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -344,38 +349,12 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
               />
               <FormField
                 control={form.control}
-                name="preOpNotes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pre-Operative Notes</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="postOpNotes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Post-Operative Notes</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="doctorRemarks"
+                name="remarks"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Doctor's Remarks</FormLabel>
                     <FormControl>
-                      <Textarea {...field} />
+                      <Textarea placeholder="Post-surgery comments..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -383,12 +362,38 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
               />
               <FormField
                 control={form.control}
-                name="specialRequirements"
+                name="instruments"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Drugs, Instruments, and Materials</FormLabel>
+                    <FormLabel>Instruments Required</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="List any unique requirements..." {...field} />
+                      <Textarea placeholder="List required instruments (comma-separated)..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="drugs_used"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Drugs / Materials</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="List required drugs and materials (comma-separated)..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="report_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Report URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/report.pdf (Optional)" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -405,3 +410,5 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
     </Dialog>
   );
 }
+
+    

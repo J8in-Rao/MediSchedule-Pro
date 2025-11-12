@@ -23,6 +23,7 @@ import { MoreHorizontal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Patient } from '@/lib/types';
+import { format } from 'date-fns';
 
 export default function PatientsPage() {
   const firestore = useFirestore();
@@ -33,7 +34,7 @@ export default function PatientsPage() {
     <>
       <PageHeader
         title="Patient Management"
-        description="Manage patient records, including pre- and post-operative information."
+        description="Manage patient records, including case details and admission dates."
       >
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Patient
@@ -55,7 +56,10 @@ export default function PatientsPage() {
                 <TableHead>Age</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead className="hidden md:table-cell">
-                  Pre-Op Info
+                  Case
+                </TableHead>
+                 <TableHead className="hidden md:table-cell">
+                  Admitted On
                 </TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -63,7 +67,7 @@ export default function PatientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>}
+              {isLoading && <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>}
               {!isLoading && patients?.map(patient => (
                 <TableRow key={patient.id}>
                   <TableCell className="hidden sm:table-cell">
@@ -79,8 +83,11 @@ export default function PatientsPage() {
                   <TableCell className="font-medium">{patient.name}</TableCell>
                   <TableCell>{patient.age}</TableCell>
                   <TableCell>{patient.gender}</TableCell>
+                  <TableCell className="hidden md:table-cell max-w-xs truncate">
+                    {patient.case_description}
+                  </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {patient.preOpInfo}
+                    {format(new Date(patient.admitted_on), 'PPP')}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -111,3 +118,5 @@ export default function PatientsPage() {
     </>
   );
 }
+
+    

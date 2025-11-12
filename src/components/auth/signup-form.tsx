@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +5,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useAuth, useFirestore } from "@/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -20,14 +19,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  role: z.enum(["admin", "patient"], { required_error: "Please select a role." }),
+  specialization: z.string().min(2, { message: "Specialization is required." }),
 });
 
 export function SignupForm() {
@@ -41,6 +40,7 @@ export function SignupForm() {
       name: "",
       email: "",
       password: "",
+      specialization: "",
     },
   });
 
@@ -50,6 +50,9 @@ export function SignupForm() {
       const user = userCredential.user;
 
       const [firstName, ...lastName] = values.name.split(' ');
+      
+      // All new signups are doctors by default
+      const role = "doctor";
 
       // Create a user document in Firestore
       const userRef = doc(firestore, "users", user.uid);
@@ -58,12 +61,26 @@ export function SignupForm() {
         email: values.email,
         firstName: firstName,
         lastName: lastName.join(' '),
-        role: values.role
+        role: role
       }, { merge: true });
+
+      // Create a corresponding doctor document
+      const doctorRef = doc(firestore, "doctors", user.uid);
+      setDocumentNonBlocking(doctorRef, {
+        id: user.uid,
+        name: values.name,
+        email: values.email,
+        specialization: values.specialization,
+        phone: "", // To be filled in from settings
+        shift_hours: "9AM-5PM", // Default value
+        availability: [], // To be filled in from settings
+        avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
+      }, { merge: true });
+
 
       toast({
         title: "Signup Successful",
-        description: `You have signed up as a ${values.role}. You can now log in.`,
+        description: "You have registered as a Doctor. You can now log in.",
       });
 
       router.push('/');
@@ -86,7 +103,7 @@ export function SignupForm() {
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="Dr. John Doe" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -120,21 +137,13 @@ export function SignupForm() {
         />
         <FormField
           control={form.control}
-          name="role"
+          name="specialization"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="patient">Patient</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Specialization</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Cardiology" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -146,3 +155,5 @@ export function SignupForm() {
     </Form>
   );
 }
+
+    

@@ -3,14 +3,17 @@ export type UserProfile = {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'patient';
+  role: 'admin' | 'doctor';
 };
 
 export type Doctor = {
   id: string;
   name: string;
+  email: string;
+  phone: string;
   specialization: string;
-  availability: string[]; // e.g., ["Monday", "Wednesday"]
+  shift_hours: string;
+  availability: string[];
   avatarUrl: string;
 };
 
@@ -19,34 +22,47 @@ export type Patient = {
   name: string;
   age: number;
   gender: 'Male' | 'Female' | 'Other';
-  preOpInfo: string;
-  postOpInfo: string;
+  case_description: string;
+  admitted_on: string; // ISO string
   avatarUrl: string;
 };
 
-export type Surgery = {
+export type OperationSchedule = {
   id: string;
   patientId: string;
   patientName: string;
   doctorId: string;
   doctorName: string;
+  otId: string;
   date: string; // ISO string
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
   procedure: string;
-  room: string;
   status: 'Scheduled' | 'Completed' | 'Cancelled' | 'In Progress';
   anesthesiaType: string;
   anesthesiologistName: string;
   assistantSurgeon?: string;
   nurses?: string[];
-  preOpNotes?: string;
-  postOpNotes?: string;
-  doctorRemarks?: string;
-  specialRequirements?: string;
-  reportUrls?: string[];
-  equipment: string[];
+  remarks?: string;
+  report_url?: string;
+  drugs_used?: string[];
+  instruments?: string[];
 };
+
+export type OperatingRoom = {
+  id: string;
+  room_number: string;
+  capacity?: number;
+  status: 'Available' | 'Occupied' | 'Maintenance';
+}
+
+export type Resource = {
+  id: string;
+  name: string;
+  type: 'Drug' | 'Instrument' | 'Material';
+  quantity: number;
+  in_use: boolean;
+}
 
 export type OtUtilization = {
   month: string;
@@ -61,15 +77,4 @@ export type SurgeryByType = {
   fill: string;
 };
 
-export type SupportMessage = {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  message: string;
-  createdAt: {
-    seconds: number;
-    nanoseconds: number;
-  } | Date;
-  status: 'New' | 'Read' | 'Resolved';
-}
+    

@@ -15,49 +15,49 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(userId)).data.role;
     }
 
-    // Users can only read and write their own data
-    match /users/{userId} {
-      allow read, update, delete: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn();
+    function isAdmin() {
+      return isSignedIn() && getUserRole(request.auth.uid) == 'admin';
     }
 
-    // Doctors, Patients, and Surgeries can be read by any authenticated user
+    function isDoctor() {
+      return isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
+    }
+
+    // Users can only read and write their own data
+    match /users/{userId} {
+      allow read, update: if isSignedIn() && (isAdmin() || isOwner(userId));
+      allow create: if isSignedIn(); // Allow any signed-in user to create their user doc
+    }
+
+    // Admins can manage doctors, patients, OTs, and resources
     match /doctors/{doctorId} {
       allow read: if isSignedIn();
-      // Allow write only if user is an admin
-      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+      allow write: if isAdmin();
     }
 
     match /patients/{patientId} {
       allow read: if isSignedIn();
-       // Allow write only if user is an admin
-      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+      allow write: if isAdmin();
+    }
+    
+    match /operating_rooms/{otId} {
+       allow read: if isSignedIn();
+       allow write: if isAdmin();
     }
 
-    match /surgeries/{surgeryId} {
-      allow read: if isSignedIn();
-       // Allow write only if user is an admin
-      allow write: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+    match /resources/{resourceId} {
+       allow read: if isSignedIn();
+       allow write: if isAdmin();
     }
 
-    match /messages/{messageId} {
-        allow create: if isSignedIn();
-        allow read, update: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
-    }
-    
-    match /roles/{roleId} {
-      allow read: if isSignedIn();
-      allow write: if false; // Disallow writing to roles for now
-    }
-    
-    match /operating_rooms/{operatingRoomId} {
-       allow read: if isSignedIn();
-       allow write: if false;
-    }
-    
-    match /operation_schedules/{operationScheduleId} {
-       allow read: if isSignedIn();
-       allow write: if false;
+    // Admins can manage all operations.
+    // Doctors can read operations they are assigned to and update remarks.
+    match /operations/{operationId} {
+      allow read: if isAdmin() || (isDoctor() && resource.data.doctorId == request.auth.uid);
+      allow create, update: if isAdmin();
+      allow update: if isDoctor() && request.resource.data.keys().hasOnly(['remarks', 'status']) && resource.data.doctorId == request.auth.uid;
     }
   }
 }
+
+    

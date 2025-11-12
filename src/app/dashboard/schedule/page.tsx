@@ -4,15 +4,15 @@ import { ScheduleTable } from '@/components/schedule/schedule-table';
 import RealTimeAdjustment from '@/components/schedule/real-time-adjustment';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import type { Surgery, Doctor, Patient } from '@/lib/types';
+import type { OperationSchedule, Doctor, Patient } from '@/lib/types';
 
 export default function SchedulePage() {
   const firestore = useFirestore();
-  const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'surgeries'), [firestore]);
+  const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operations'), [firestore]);
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   
-  const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<Surgery>(surgeriesCollection);
+  const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesCollection);
   const { data: doctors, isLoading: isLoadingDoctors } = useCollection<Doctor>(doctorsCollection);
   const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
 
@@ -34,3 +34,5 @@ export default function SchedulePage() {
     </>
   );
 }
+
+    

@@ -13,8 +13,8 @@ export default function SignupPage() {
               <Stethoscope className="w-8 h-8 text-primary" />
               <h1 className="text-2xl font-bold text-primary">MediSchedule Pro</h1>
             </div>
-            <CardTitle className="text-2xl">Create an Account</CardTitle>
-            <CardDescription>Enter your details to get started</CardDescription>
+            <CardTitle className="text-2xl">Create a Doctor Account</CardTitle>
+            <CardDescription>Enter your details to register as a doctor.</CardDescription>
           </CardHeader>
           <CardContent>
             <SignupForm />
@@ -30,3 +30,5 @@ export default function SignupPage() {
     </div>
   );
 }
+
+    

@@ -20,7 +20,9 @@ const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required.'),
   lastName: z.string().min(1, 'Last name is required.'),
+  phone: z.string().optional(),
   specialization: z.string().min(1, 'Specialization is required.'),
+  shift_hours: z.string().min(1, 'Shift hours are required.'),
   availability: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one day.',
   }),
@@ -40,7 +42,9 @@ export default function DoctorSettingsForm({ userProfile, doctorProfile }: Docto
     defaultValues: {
       firstName: userProfile?.firstName || '',
       lastName: userProfile?.lastName || '',
+      phone: doctorProfile?.phone || '',
       specialization: doctorProfile?.specialization || '',
+      shift_hours: doctorProfile?.shift_hours || '',
       availability: doctorProfile?.availability || [],
     },
   });
@@ -51,7 +55,9 @@ export default function DoctorSettingsForm({ userProfile, doctorProfile }: Docto
     reset({
         firstName: userProfile?.firstName || '',
         lastName: userProfile?.lastName || '',
+        phone: doctorProfile?.phone || '',
         specialization: doctorProfile?.specialization || '',
+        shift_hours: doctorProfile?.shift_hours || '',
         availability: doctorProfile?.availability || [],
     });
   }, [userProfile, doctorProfile, reset]);
@@ -74,6 +80,8 @@ export default function DoctorSettingsForm({ userProfile, doctorProfile }: Docto
     const doctorData = {
       name: `${values.firstName} ${values.lastName}`,
       specialization: values.specialization,
+      phone: values.phone,
+      shift_hours: values.shift_hours,
       availability: values.availability,
     };
 
@@ -86,7 +94,7 @@ export default function DoctorSettingsForm({ userProfile, doctorProfile }: Docto
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Admin Profile</CardTitle>
+        <CardTitle>My Profile</CardTitle>
         <CardDescription>Update your professional information here. This is visible to other staff.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,19 +128,47 @@ export default function DoctorSettingsForm({ userProfile, doctorProfile }: Docto
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="specialization"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specialization</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="specialization"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Specialization</FormLabel>
+                    <FormControl>
+                        <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                        <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <FormField
+                control={form.control}
+                name="shift_hours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Shift Hours</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 9AM-5PM" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             <FormField
               control={form.control}
               name="availability"
@@ -187,3 +223,5 @@ export default function DoctorSettingsForm({ userProfile, doctorProfile }: Docto
     </Card>
   );
 }
+
+    

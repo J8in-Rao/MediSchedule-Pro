@@ -15,30 +15,32 @@ import {
   Users,
   BarChart,
   Settings,
-  MessageSquare
+  ShieldAlert,
+  Hospital,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PageHeader } from '../shared/page-header';
 
 const allNavItems = [
   { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
-  { href: '/dashboard/patient', icon: LayoutGrid, label: 'Dashboard', roles: ['patient'] },
+  { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
   { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
   { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },
+  { href: '/dashboard/ots', icon: Hospital, label: 'OTs', roles: ['admin'] },
+  { href: '/dashboard/resources', icon: Package, label: 'Resources', roles: ['admin'] },
   { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['admin'] },
-  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['admin'] },
 ];
 
 type SidebarNavProps = {
-  userRole?: 'admin' | 'patient';
+  userRole?: 'admin' | 'doctor';
 };
 
 export default function SidebarNav({ userRole }: SidebarNavProps) {
   const pathname = usePathname();
 
   const navItems = allNavItems.filter(item => userRole && item.roles.includes(userRole));
-   const dashboardHref = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/patient';
+  const dashboardHref = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/doctor';
 
 
   return (
@@ -61,7 +63,7 @@ export default function SidebarNav({ userRole }: SidebarNavProps) {
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
                     {
-                      'bg-accent text-accent-foreground': pathname === item.href,
+                      'bg-accent text-accent-foreground': pathname.startsWith(item.href),
                     }
                   )}
                 >
@@ -93,3 +95,5 @@ export default function SidebarNav({ userRole }: SidebarNavProps) {
     </aside>
   );
 }
+
+    

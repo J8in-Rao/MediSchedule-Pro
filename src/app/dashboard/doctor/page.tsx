@@ -1,17 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { format } from 'date-fns';
-import { Activity, CheckCircle, Clock, Users } from 'lucide-react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-
-import type { Surgery } from '@/lib/types';
+import type { OperationSchedule } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
+import { Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
-function getStatusBadgeVariant(status: Surgery['status']) {
+function getStatusBadgeVariant(status: OperationSchedule['status']) {
   switch (status) {
     case 'Completed':
       return 'secondary';
@@ -25,113 +36,134 @@ function getStatusBadgeVariant(status: Surgery['status']) {
   }
 }
 
-export default function AdminDashboardPage() {
-  const [date, setDate] = useState<Date | undefined>(new Date());
+function RemarksDialog({ surgery }: { surgery: OperationSchedule }) {
+  const [remarks, setRemarks] = useState(surgery.remarks || '');
+  const [isOpen, setIsOpen] = useState(false);
   const firestore = useFirestore();
 
-  const surgeriesQuery = useMemoFirebase(() => {
-    if (!date) return null;
-    const dateString = format(date, 'yyyy-MM-dd');
-    return query(collection(firestore, 'surgeries'), where('date', '==', dateString));
-  }, [firestore, date]);
-
-  const { data: selectedDateSurgeries, isLoading } = useCollection<Surgery>(surgeriesQuery);
-
-  const stats = {
-    total: selectedDateSurgeries?.length || 0,
-    completed: selectedDateSurgeries?.filter((s) => s.status === 'Completed').length || 0,
-    inProgress: selectedDateSurgeries?.filter((s) => s.status === 'In Progress').length || 0,
-    scheduled: selectedDateSurgeries?.filter((s) => s.status === 'Scheduled').length || 0,
+  const handleSave = () => {
+    if (!surgery.id) return;
+    const surgeryRef = doc(firestore, 'operations', surgery.id);
+    updateDocumentNonBlocking(surgeryRef, { remarks: remarks, status: 'Completed' });
+    toast({
+      title: "Remarks Saved",
+      description: "The surgery has been marked as completed.",
+    });
+    setIsOpen(false);
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-      <div className="lg:col-span-5 grid auto-rows-max items-start gap-4">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Surgeries</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.completed}</div>
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.inProgress}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Scheduled</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.scheduled}</div>
-            </CardContent>
-          </Card>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">Add Remarks</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Post-Surgery Remarks</DialogTitle>
+          <DialogDescription>
+            Add your notes for the surgery: {surgery.procedure} on {surgery.patientName}.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <Textarea 
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder="Enter post-operative notes here..."
+            rows={6}
+          />
         </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button onClick={handleSave}>Save and Mark as Completed</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Surgeries for {format(date || new Date(), 'MMMM d, yyyy')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoading ? (
-              <p className="text-center text-muted-foreground py-8">Loading surgeries...</p>
-            ) : selectedDateSurgeries && selectedDateSurgeries.length > 0 ? (
-              selectedDateSurgeries.map((surgery) => (
-                <div key={surgery.id} className="p-4 rounded-lg border bg-card">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex-1 space-y-1">
-                      <p className="font-semibold text-lg">{surgery.procedure}</p>
-                      <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
-                      <p className="text-sm text-muted-foreground">Doctor: {surgery.doctorName}</p>
+
+export default function DoctorDashboardPage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const surgeriesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'operations'), where('doctorId', '==', user.uid));
+  }, [firestore, user]);
+
+  const { data: surgeries, isLoading } = useCollection<OperationSchedule>(surgeriesQuery);
+
+  const upcomingSurgeries = surgeries?.filter(s => new Date(s.date) >= new Date() && s.status === 'Scheduled');
+  const pastSurgeries = surgeries?.filter(s => new Date(s.date) < new Date() || s.status !== 'Scheduled');
+
+  return (
+    <div className="grid gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>My Upcoming Operations</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            <p className="text-center text-muted-foreground py-8">Loading your operations...</p>
+          ) : upcomingSurgeries && upcomingSurgeries.length > 0 ? (
+            upcomingSurgeries.map((surgery) => (
+              <div key={surgery.id} className="p-4 rounded-lg border bg-card">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex-1 space-y-1">
+                    <p className="font-semibold text-lg">{surgery.procedure}</p>
+                    <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
+                    <p className="text-sm font-semibold">{format(new Date(surgery.date), 'MMMM d, yyyy')}</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>{surgery.startTime} - {surgery.endTime}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4"/>
-                            <span>{surgery.startTime} - {surgery.endTime}</span>
-                        </div>
-                        <div className="font-medium">{surgery.room}</div>
-                        <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
-                    </div>
+                    <div className="font-medium">OT-{surgery.otId}</div>
+                    <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground py-8">No surgeries scheduled for this day.</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="lg:col-span-2 space-y-4">
-        <Card>
-          <CardContent className="p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-muted-foreground py-8">You have no upcoming operations.</p>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>My Past Operations</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            <p className="text-center text-muted-foreground py-8">Loading past operations...</p>
+          ) : pastSurgeries && pastSurgeries.length > 0 ? (
+            pastSurgeries.map((surgery) => (
+              <div key={surgery.id} className="p-4 rounded-lg border bg-card opacity-70">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex-1 space-y-1">
+                    <p className="font-semibold text-lg">{surgery.procedure}</p>
+                    <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
+                    <p className="text-sm">{format(new Date(surgery.date), 'MMMM d, yyyy')}</p>
+                    {surgery.remarks && <p className="text-xs italic text-muted-foreground pt-2">Your Remarks: "{surgery.remarks}"</p>}
+                  </div>
+                   <div className="flex flex-col items-end gap-2">
+                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="font-medium">OT-{surgery.otId}</div>
+                        <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
+                    </div>
+                    {surgery.status !== 'Completed' && <RemarksDialog surgery={surgery} />}
+                   </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-muted-foreground py-8">You have no past operations.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+    

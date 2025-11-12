@@ -32,11 +32,11 @@ import {
 } from "@/components/ui/table";
 import { PlusCircle, ChevronDown } from "lucide-react";
 import { getColumns } from "./schedule-columns";
-import { Doctor, Patient, Surgery } from "@/lib/types";
+import { Doctor, Patient, OperationSchedule } from "@/lib/types";
 import { ScheduleForm } from "./schedule-form";
 
 interface ScheduleTableProps {
-  data: Surgery[];
+  data: OperationSchedule[];
   doctors: Doctor[];
   patients: Patient[];
 }
@@ -107,7 +107,7 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
           </DropdownMenuContent>
         </DropdownMenu>
         <Button onClick={() => setIsFormOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Schedule Surgery
+          <PlusCircle className="mr-2 h-4 w-4" /> Schedule Operation
         </Button>
       </div>
       <div className="rounded-md border">
@@ -193,3 +193,5 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
     </div>
   );
 }
+
+    

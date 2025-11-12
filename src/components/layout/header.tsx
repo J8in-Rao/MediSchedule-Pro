@@ -12,8 +12,9 @@ import {
   Users,
   BarChart,
   User,
-  MessageSquare,
-  ShieldCheck,
+  ShieldAlert,
+  Hospital,
+  Package
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -42,16 +43,17 @@ import { toast } from '@/hooks/use-toast';
 
 const allMobileNavItems = [
   { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
-  { href: '/dashboard/patient', icon: LayoutGrid, label: 'Dashboard', roles: ['patient'] },
+  { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
   { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
   { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },
+  { href: '/dashboard/ots', icon: Hospital, label: 'OTs', roles: ['admin'] },
+  { href: '/dashboard/resources', icon: Package, label: 'Resources', roles: ['admin'] },
   { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['admin'] },
-  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['admin'] },
 ];
 
 type HeaderProps = {
-  userRole?: 'admin' | 'patient';
+  userRole?: 'admin' | 'doctor';
 };
 
 export default function Header({ userRole }: HeaderProps) {
@@ -61,7 +63,7 @@ export default function Header({ userRole }: HeaderProps) {
   const pathParts = pathname.split('/').filter(Boolean);
 
   const mobileNavItems = allMobileNavItems.filter(item => userRole && item.roles.includes(userRole));
-  const dashboardHref = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/patient';
+  const dashboardHref = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/doctor';
 
   const handleLogout = async () => {
     try {
@@ -80,7 +82,7 @@ export default function Header({ userRole }: HeaderProps) {
     }
   };
 
-  const ProfileIcon = userRole === 'admin' ? ShieldCheck : User;
+  const ProfileIcon = userRole === 'admin' ? ShieldAlert : User;
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -111,7 +113,7 @@ export default function Header({ userRole }: HeaderProps) {
                 href={item.href}
                 className={cn(
                   'flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground',
-                  { 'text-foreground': pathname === item.href }
+                  { 'text-foreground': pathname.startsWith(item.href) }
                 )}
               >
                 <item.icon className="h-5 w-5" />
@@ -170,3 +172,5 @@ export default function Header({ userRole }: HeaderProps) {
     </header>
   );
 }
+
+    
