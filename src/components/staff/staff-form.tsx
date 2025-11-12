@@ -30,6 +30,7 @@ import {
 import { Checkbox } from "../ui/checkbox";
 import { createAuthUser } from "@/firebase/auth/create-user";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import React from "react";
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -46,7 +47,7 @@ const baseFormSchema = z.object({
 });
 
 // Refinement for doctor-specific fields
-const doctorRefinement = (schema: typeof baseFormSchema) => schema.refine(data => {
+const doctorRefinement = (schema: z.ZodObject<any, any, any>) => schema.refine(data => {
     if (data.role === 'doctor' && !data.specialization) return false;
     return true;
 }, {
@@ -111,6 +112,31 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
     });
 
     const role = form.watch('role');
+
+    React.useEffect(() => {
+        if (staff) {
+            form.reset({
+                name: `${staff.firstName} ${staff.lastName}`,
+                email: staff.email,
+                role: staff.role,
+                specialization: staff.specialization || '',
+                phone: staff.phone || '',
+                shift_hours: staff.shift_hours || '9AM-5PM',
+                availability: staff.availability || [],
+            });
+        } else {
+            form.reset({
+                name: "",
+                email: "",
+                password: "",
+                role: "doctor",
+                specialization: "",
+                phone: "",
+                shift_hours: "9AM-5PM",
+                availability: [],
+            });
+        }
+    }, [staff, form]);
 
   async function onSubmit(values: z.infer<typeof finalSchema>) {
     try {
