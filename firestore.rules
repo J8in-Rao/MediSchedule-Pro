@@ -2,18 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
     function getUserRole(userId) {
-      // Check if the user document exists before trying to access its data.
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+      return exists(/databases/$(database)/documents/users/$(userId))
+        ? get(/databases/$(database)/documents/users/$(userId)).data.role
+        : null;
     }
 
     function isAdmin() {
@@ -23,56 +19,54 @@ service cloud.firestore {
     function isDoctor() {
       return isSignedIn() && getUserRole(request.auth.uid) == 'doctor';
     }
-    
-    // Helper function to check if a doctor is assigned to any operation for a given patient.
-    function isDoctorAssignedToPatient(doctorId, patientId) {
-      return exists(/databases/$(database)/documents/operations?where("doctorId", "==", doctorId).where("patientId", "==", patientId));
+
+    // Optional helper if patient has assignedDoctors array
+    function isDoctorAssignedToPatient(patientId) {
+      return get(/databases/$(database)/documents/patients/$(patientId))
+               .data.assignedDoctors.hasAny([request.auth.uid]);
     }
 
-    // Admins can read/write all user docs. Doctors can only read their own.
-    // Only admins can create new user docs.
+    // USERS
     match /users/{userId} {
-      allow read, update: if isSignedIn() && (isAdmin() || isOwner(userId));
+      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
+      allow update: if isSignedIn() && request.auth.uid == userId &&
+                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
       allow create: if isAdmin();
     }
-    
-    match /admins/{adminId} {
-      allow read, write: if isAdmin();
-    }
 
-    // Admins can manage doctors, patients, OTs, and resources
+    // DOCTORS
     match /doctors/{doctorId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    // Admins can manage patients.
-    // Doctors can only read patient data if they are assigned to one of that patient's operations.
+    // PATIENTS
     match /patients/{patientId} {
-      allow read: if isAdmin() || (isDoctor() && isDoctorAssignedToPatient(request.auth.uid, patientId));
+      allow read: if isAdmin() || (isDoctor() && isDoctorAssignedToPatient(patientId));
       allow write: if isAdmin();
     }
-    
+
+    // OPERATING ROOMS
     match /operating_rooms/{otId} {
-       allow read: if isSignedIn();
-       allow write: if isAdmin();
-    }
-    
-    match /resources/{resourceId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
-    
+
+    // RESOURCES
+    match /resources/{resId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // MESSAGES
     match /messages/{messageId} {
       allow read: if isAdmin();
       allow create: if isSignedIn();
       allow update: if isAdmin();
     }
 
-    // Admins can manage all operations.
-    // Doctors can read operations they are assigned to.
-    // Doctors can only update the 'status' and 'remarks' fields for their assigned operations.
-    match /operations/{operationId} {
+    // OPERATIONS
+    match /operations/{opId} {
       allow read: if isAdmin() || (isDoctor() && resource.data.doctorId == request.auth.uid);
       allow create: if isAdmin();
       allow update: if isAdmin() || (
@@ -83,3 +77,4 @@ service cloud.firestore {
     }
   }
 }
+
