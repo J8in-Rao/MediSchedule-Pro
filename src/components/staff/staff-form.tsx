@@ -3,10 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useAuth, useFirestore } from "@/firebase";
+import { useFirestore } from "@/firebase";
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import { toast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import type { Doctor } from "@/lib/types";
@@ -29,6 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Checkbox } from "../ui/checkbox";
+import { createAuthUser } from "@/firebase/auth/create-user";
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -52,7 +52,6 @@ type StaffFormProps = {
 };
 
 export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
-    const auth = useAuth();
     const firestore = useFirestore();
     
     // Adjust schema based on whether we are editing or creating
@@ -107,7 +106,7 @@ export function StaffForm({ isOpen, setIsOpen, doctor }: StaffFormProps) {
             // This requires values to have a password, ensured by the schema refinement.
             const newDoctorValues = values as z.infer<typeof formSchema>;
             
-            const userCredential = await createUserWithEmailAndPassword(auth, newDoctorValues.email, newDoctorValues.password!);
+            const userCredential = await createAuthUser(newDoctorValues.email, newDoctorValues.password!);
             const user = userCredential.user;
 
             const [firstName, ...lastName] = newDoctorValues.name.split(' ');
