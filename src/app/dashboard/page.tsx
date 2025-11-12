@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useDoc, useFirestore } from '@/firebase';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
 // Define the UserProfile type for type safety
@@ -19,7 +19,7 @@ export default function DashboardRedirectPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
 
-  const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
+  const userDocRef = useMemoFirebase(() => user ? doc(firestore, `users/${user.uid}`) : null, [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
   useEffect(() => {
