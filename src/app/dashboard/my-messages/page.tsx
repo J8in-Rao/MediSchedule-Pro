@@ -87,8 +87,8 @@ export default function MyMessagesPage() {
             <CardTitle>Chat with Admin</CardTitle>
             <CardDescription>Direct messages with the administrative team.</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-          <ScrollArea className="flex-1 pr-4">
+        <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden p-0">
+          <ScrollArea className="flex-1 px-6 py-4">
             <div className="space-y-4">
               {isLoading && <p>Loading messages...</p>}
               {filteredMessages?.map(msg => {
@@ -123,7 +123,7 @@ export default function MyMessagesPage() {
             </div>
           </ScrollArea>
            <form
-            className="flex w-full items-center space-x-2 pt-4 border-t"
+            className="flex w-full items-center space-x-2 p-6 pt-4 border-t"
             onSubmit={handleSubmit}
           >
             <Textarea
