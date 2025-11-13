@@ -14,11 +14,14 @@ import { collection, query, where } from 'firebase/firestore';
 import type { Patient, OperationSchedule, SurgeryRequest } from '@/lib/types';
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { toast } from '@/hooks/use-toast';
+import { PatientDetails } from '@/components/patients/patient-details';
 
 export default function MyPatientsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   // 1. Get all operations for the current doctor
   const surgeriesQuery = useMemoFirebase(() => {
@@ -71,11 +74,8 @@ export default function MyPatientsPage() {
   const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingRequests;
 
   const handlePatientClick = (patient: Patient) => {
-    // Placeholder for future patient detail view implementation
-    toast({
-        title: "Patient Details",
-        description: `Showing details for ${patient.name}. (Full page coming soon!)`
-    });
+    setSelectedPatient(patient);
+    setIsDetailsOpen(true);
   }
 
   const renderPatientTable = (patients: Patient[], title: string, description: string) => (
@@ -127,6 +127,14 @@ export default function MyPatientsPage() {
       />
       {renderPatientTable(currentPatients, "Current Patients", "Patients with upcoming operations or pending requests.")}
       {renderPatientTable(pastPatients, "Past Patients", "Patients you have previously operated on.")}
+
+      {selectedPatient && (
+        <PatientDetails
+            isOpen={isDetailsOpen}
+            setIsOpen={setIsDetailsOpen}
+            patient={selectedPatient}
+        />
+      )}
     </div>
   );
 }
