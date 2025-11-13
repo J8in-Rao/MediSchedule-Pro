@@ -27,8 +27,8 @@ export default function MyMessagesPage() {
         or(
             where("sender_id", "==", user.uid),
             where("receiver_id", "==", user.uid)
-        )
-        // orderBy("timestamp", "asc") // Temporarily removed for testing
+        ),
+        orderBy("timestamp", "asc")
     );
   }, [firestore, user]);
   
@@ -68,14 +68,8 @@ export default function MyMessagesPage() {
   
   const filteredMessages = useMemo(() => {
     if (!messages) return [];
-    // Manually sort messages by timestamp since orderBy is removed from the query
-    const sorted = messages.sort((a, b) => {
-        const timeA = a.timestamp ? (a.timestamp as any).seconds : 0;
-        const timeB = b.timestamp ? (b.timestamp as any).seconds : 0;
-        return timeA - timeB;
-    });
-
-    return sorted.filter(msg => 
+    // Filter messages for the specific doctor-admin conversation
+    return messages.filter(msg => 
         (msg.sender_id === user?.uid && msg.receiver_id === 'admin-group') || 
         (msg.sender_id === 'admin-group' && msg.receiver_id === user?.uid)
     );
