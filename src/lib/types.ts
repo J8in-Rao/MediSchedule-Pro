@@ -26,8 +26,7 @@ export type Patient = {
   name: string;
   age: number;
   gender: 'Male' | 'Female' | 'Other';
-  case_description: string;
-  contact: string;
+  contact?: string;
   admitted_on: string; // ISO string
   created_by: string; // Admin UID
   created_at: { seconds: number; nanoseconds: number } | Date;
@@ -134,3 +133,5 @@ export type SupportMessage = {
   status?: 'New' | 'Read' | 'Resolved';
   message?: string;
 };
+
+    

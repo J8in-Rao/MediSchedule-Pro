@@ -78,25 +78,23 @@ export default function MyPatientsPage() {
                 <TableHead>Age</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Contact</TableHead>
-                <TableHead>Case Description</TableHead>
                 <TableHead>Admitted On</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={6} className="text-center">Loading patients...</TableCell></TableRow>}
+              {isLoading && <TableRow><TableCell colSpan={5} className="text-center">Loading patients...</TableCell></TableRow>}
               {!isLoading && patients.map(patient => (
                 <TableRow key={patient.id} onClick={() => handlePatientClick(patient)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{patient.name}</TableCell>
                   <TableCell>{patient.age}</TableCell>
                   <TableCell>{patient.gender}</TableCell>
                   <TableCell>{patient.contact}</TableCell>
-                  <TableCell className="max-w-xs truncate">{patient.case_description}</TableCell>
                   <TableCell>{format(new Date(patient.admitted_on), 'PPP')}</TableCell>
                 </TableRow>
               ))}
               {!isLoading && patients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     No patients found in this category.
                   </TableCell>
                 </TableRow>
@@ -118,3 +116,5 @@ export default function MyPatientsPage() {
     </div>
   );
 }
+
+    

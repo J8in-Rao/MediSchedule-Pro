@@ -50,7 +50,7 @@ export default function PatientsPage() {
     <>
       <PageHeader
         title="Patient Management"
-        description="Manage patient records, including case details and admission dates."
+        description="Manage patient demographic records."
       >
         <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Patient
@@ -69,9 +69,6 @@ export default function PatientsPage() {
                 <TableHead>Age</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Contact</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Case
-                </TableHead>
                  <TableHead className="hidden md:table-cell">
                   Admitted On
                 </TableHead>
@@ -81,16 +78,13 @@ export default function PatientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>}
+              {isLoading && <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>}
               {!isLoading && patients?.map(patient => (
                 <TableRow key={patient.id}>
                   <TableCell className="font-medium">{patient.name}</TableCell>
                   <TableCell>{patient.age}</TableCell>
                   <TableCell>{patient.gender}</TableCell>
-                  <TableCell>{patient.contact}</TableCell>
-                  <TableCell className="hidden md:table-cell max-w-xs truncate">
-                    {patient.case_description}
-                  </TableCell>
+                  <TableCell>{patient.contact || 'N/A'}</TableCell>
                   <TableCell className="hidden md:table-cell">
                     {format(new Date(patient.admitted_on), 'PPP')}
                   </TableCell>
@@ -118,7 +112,7 @@ export default function PatientsPage() {
               ))}
               {!isLoading && patients?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No patients found.
                   </TableCell>
                 </TableRow>

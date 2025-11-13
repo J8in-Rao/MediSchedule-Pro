@@ -48,9 +48,8 @@ const formSchema = z.object({
   name: z.string().min(1, "Patient name is required"),
   age: z.coerce.number().min(0, "Age must be a positive number"),
   gender: z.enum(['Male', 'Female', 'Other']),
-  contact: z.string().min(1, "Contact information is required"),
+  contact: z.string().optional(),
   admitted_on: z.date({ required_error: "Admission date is required." }),
-  case_description: z.string().min(1, "Case description is required"),
 });
 
 type PatientFormProps = {
@@ -74,7 +73,6 @@ export function PatientForm({ isOpen, setIsOpen, patient }: PatientFormProps) {
       gender: "Male",
       contact: "",
       admitted_on: new Date(),
-      case_description: "",
     },
   });
   
@@ -174,7 +172,7 @@ export function PatientForm({ isOpen, setIsOpen, patient }: PatientFormProps) {
                 name="contact"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Info</FormLabel>
+                    <FormLabel>Contact Info (Optional)</FormLabel>
                     <FormControl>
                       <Input placeholder="Phone or email" {...field} />
                     </FormControl>
@@ -220,19 +218,6 @@ export function PatientForm({ isOpen, setIsOpen, patient }: PatientFormProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="case_description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Case Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Diagnosis or reason for operation..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </form>
           </Form>
         </div>
@@ -244,3 +229,5 @@ export function PatientForm({ isOpen, setIsOpen, patient }: PatientFormProps) {
     </Dialog>
   );
 }
+
+    
