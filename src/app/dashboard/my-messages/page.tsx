@@ -19,15 +19,13 @@ export default function MyMessagesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Query for messages where the current user is either the sender or receiver
+  // Query for messages where the current user is either the sender or receiver of a message to/from the admin group
   const messagesQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
       collection(firestore, 'messages'),
-      or(
-        where('sender_id', '==', user.uid),
-        where('receiver_id', '==', user.uid)
-      ),
+      where('sender_id', '==', user.uid),
+      where('receiver_id', '==', 'admin-group'),
       orderBy('timestamp', 'asc')
     );
   }, [firestore, user]);
