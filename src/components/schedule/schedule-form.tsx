@@ -142,155 +142,22 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl grid-rows-[auto_1fr_auto] p-0 max-h-[90vh]">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>{surgery ? "Edit Operation" : "Schedule New Operation"}</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-6">
-            <FormField
-              control={form.control}
-              name="procedure"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Procedure</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Appendectomy" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
+        <div className="overflow-y-auto">
+          <Form {...form}>
+            <form id="schedule-form" className="space-y-4 px-6">
               <FormField
                 control={form.control}
-                name="patient_id"
+                name="procedure"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a patient" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="doctor_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Doctor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a doctor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {doctors.map((d) => (
-                          <SelectItem key={d.id} value={d.id}>{d.name} ({d.specialization})</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-               <FormField
-                  control={form.control}
-                  name="start_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="end_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-             <FormField
-                control={form.control}
-                name="ot_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Operating Room</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a room" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {operatingRooms?.filter(ot => ot.status === 'available').map(ot => (
-                           <SelectItem key={ot.id} value={ot.id}>{ot.room_number}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Procedure</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Appendectomy" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -298,12 +165,195 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="anesthesia_type"
+                  name="patient_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Anesthesia Type</FormLabel>
+                      <FormLabel>Patient</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a patient" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {patients.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="doctor_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Doctor</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a doctor" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {doctors.map((d) => (
+                            <SelectItem key={d.id} value={d.id}>{d.name} ({d.specialization})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="start_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Time</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="end_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
+               <FormField
+                  control={form.control}
+                  name="ot_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Operating Room</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a room" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {operatingRooms?.filter(ot => ot.status === 'available').map(ot => (
+                             <SelectItem key={ot.id} value={ot.id}>{ot.room_number}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="anesthesia_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Anesthesia Type</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., General" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="anesthesiologist"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Anesthesiologist</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Dr. Jane Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                 <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Set status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="scheduled">Scheduled</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="assistant_surgeon"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assistant Surgeon</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., General" {...field} />
+                        <Input placeholder="Dr. Alex Ray (Optional)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -311,128 +361,77 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                 />
                 <FormField
                   control={form.control}
-                  name="anesthesiologist"
+                  name="nurses"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Anesthesiologist</FormLabel>
+                      <FormLabel>Nurses</FormLabel>
                       <FormControl>
-                        <Input placeholder="Dr. Jane Doe" {...field} />
+                        <Input placeholder="Nurse 1, Nurse 2, ... (comma-separated)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
-               <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormField
+                  control={form.control}
+                  name="remarks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Doctor's Remarks</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Set status" />
-                        </SelectTrigger>
+                        <Textarea placeholder="Post-surgery comments..." {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="scheduled">Scheduled</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="assistant_surgeon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assistant Surgeon</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Dr. Alex Ray (Optional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="nurses"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nurses</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nurse 1, Nurse 2, ... (comma-separated)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="remarks"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Doctor's Remarks</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Post-surgery comments..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="instruments"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Instruments Required</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="List required instruments (comma-separated)..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="drugs_used"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Drugs / Materials</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="List required drugs and materials (comma-separated)..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="report_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Report URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com/report.pdf (Optional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-            <DialogFooter className="sticky bottom-0 bg-background pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Schedule</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="instruments"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instruments Required</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="List required instruments (comma-separated)..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="drugs_used"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Drugs / Materials</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="List required drugs and materials (comma-separated)..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="report_url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Report URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://example.com/report.pdf (Optional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </form>
+          </Form>
+        </div>
+        <DialogFooter className="p-6 pt-0">
+          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button type="submit" form="schedule-form" onClick={form.handleSubmit(onSubmit)}>Save Schedule</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-    

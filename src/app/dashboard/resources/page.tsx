@@ -71,88 +71,90 @@ function ResourceForm({ isOpen, setIsOpen, resource }: { isOpen: boolean, setIsO
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="grid-rows-[auto_1fr_auto] p-0 max-h-[90vh]">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>{resource ? 'Edit' : 'Add'} Resource</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Resource Name</FormLabel>
-                  <FormControl><Input placeholder="e.g., Scalpel" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="drug">Drug</SelectItem>
-                      <SelectItem value="instrument">Instrument</SelectItem>
-                      <SelectItem value="material">Material</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
+        <div className="overflow-y-auto">
+          <Form {...form}>
+            <form id="resource-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-6">
               <FormField
                 control={form.control}
-                name="quantity"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormLabel>Resource Name</FormLabel>
+                    <FormControl><Input placeholder="e.g., Scalpel" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="unit"
+                name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit</FormLabel>
-                    <FormControl><Input placeholder="e.g., ml, pcs" {...field} /></FormControl>
+                    <FormLabel>Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="drug">Drug</SelectItem>
+                        <SelectItem value="instrument">Instrument</SelectItem>
+                        <SelectItem value="material">Material</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-            <FormField
-              control={form.control}
-              name="in_use"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>In Use</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit">Save</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl><Input type="number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unit</FormLabel>
+                      <FormControl><Input placeholder="e.g., ml, pcs" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="in_use"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>In Use</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+        </div>
+        <DialogFooter className="p-6 pt-0">
+          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button type="submit" form="resource-form" onClick={form.handleSubmit(onSubmit)}>Save</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -250,5 +252,3 @@ export default function ResourcesPage() {
     </>
   );
 }
-
-    

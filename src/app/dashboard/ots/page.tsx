@@ -72,68 +72,70 @@ function OTForm({ isOpen, setIsOpen, ot }: { isOpen: boolean, setIsOpen: (open: 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="grid-rows-[auto_1fr_auto] p-0 max-h-[90vh]">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>{ot ? 'Edit' : 'Add'} Operating Room</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="room_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Room Number</FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="capacity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Capacity</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="available">Available</SelectItem>
-                      <SelectItem value="in-use">In Use</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="equipment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Equipment (comma-separated)</FormLabel>
-                  <FormControl><Textarea {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit">Save</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <div className="overflow-y-auto">
+          <Form {...form}>
+            <form id="ot-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-6">
+              <FormField
+                control={form.control}
+                name="room_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Room Number</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="capacity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Capacity</FormLabel>
+                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="available">Available</SelectItem>
+                        <SelectItem value="in-use">In Use</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="equipment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Equipment (comma-separated)</FormLabel>
+                    <FormControl><Textarea {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+        </div>
+        <DialogFooter className="p-6 pt-0">
+          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button type="submit" form="ot-form" onClick={form.handleSubmit(onSubmit)}>Save</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -227,5 +229,3 @@ export default function OTsPage() {
     </>
   );
 }
-
-    

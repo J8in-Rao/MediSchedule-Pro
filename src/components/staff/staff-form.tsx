@@ -225,179 +225,178 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-xl grid-rows-[auto_1fr_auto] p-0 max-h-[90vh]">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>{staff ? "Edit Staff Member" : "Add New Staff Member"}</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-6">
-            <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl><Input placeholder="Dr. John Doe" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-            )}/>
-            <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl><Input type="email" placeholder="name@example.com" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-            )}/>
-            {!staff && (
-                <FormField control={form.control} name="password" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                )}/>
-            )}
-             <FormField
-             control={form.control}
-             name="role"
-             render={({ field }) => (
-                 <FormItem className="space-y-3">
-                 <FormLabel>Select Role</FormLabel>
-                 <FormControl>
-                     <RadioGroup
-                     onValueChange={field.onChange}
-                     defaultValue={field.value}
-                     className="flex space-x-4"
-                     >
-                     <FormItem className="flex items-center space-x-2 space-y-0">
-                         <FormControl>
-                         <RadioGroupItem value="doctor" />
-                         </FormControl>
-                         <FormLabel className="font-normal">Doctor</FormLabel>
-                     </FormItem>
-                     <FormItem className="flex items-center space-x-2 space-y-0">
-                         <FormControl>
-                         <RadioGroupItem value="admin" />
-                         </FormControl>
-                         <FormLabel className="font-normal">Admin</FormLabel>
-                     </FormItem>
-                     </RadioGroup>
-                 </FormControl>
-                 <FormMessage />
-                 </FormItem>
-             )}
-             />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <FormLabel>Active</FormLabel>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
+        <div className="overflow-y-auto">
+          <Form {...form}>
+            <form id="staff-form" className="space-y-4 px-6">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl><Input placeholder="Dr. John Doe" {...field} /></FormControl>
+                    <FormMessage />
                   </FormItem>
-                )}
-              />
-              {role === 'doctor' && (
+              )}/>
+              <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl><Input type="email" placeholder="name@example.com" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )}/>
+              {!staff && (
+                  <FormField control={form.control} name="password" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+              )}
+               <FormField
+               control={form.control}
+               name="role"
+               render={({ field }) => (
+                   <FormItem className="space-y-3">
+                   <FormLabel>Select Role</FormLabel>
+                   <FormControl>
+                       <RadioGroup
+                       onValueChange={field.onChange}
+                       defaultValue={field.value}
+                       className="flex space-x-4"
+                       >
+                       <FormItem className="flex items-center space-x-2 space-y-0">
+                           <FormControl>
+                           <RadioGroupItem value="doctor" />
+                           </FormControl>
+                           <FormLabel className="font-normal">Doctor</FormLabel>
+                       </FormItem>
+                       <FormItem className="flex items-center space-x-2 space-y-0">
+                           <FormControl>
+                           <RadioGroupItem value="admin" />
+                           </FormControl>
+                           <FormLabel className="font-normal">Admin</FormLabel>
+                       </FormItem>
+                       </RadioGroup>
+                   </FormControl>
+                   <FormMessage />
+                   </FormItem>
+               )}
+               />
+
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="verified"
+                  name="isActive"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <FormLabel>Verified</FormLabel>
+                      <FormLabel>Active</FormLabel>
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}
                 />
-              )}
-            </div>
-
-            {role === 'doctor' && (
-              <>
-                <FormField control={form.control} name="specialization" render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Specialization</FormLabel>
-                    <FormControl><Input placeholder="e.g., Cardiology" {...field} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}/>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="phone" render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl><Input placeholder="(123) 456-7890" {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}/>
-                    <FormField control={form.control} name="shift_hours" render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Shift Hours</FormLabel>
-                        <FormControl><Input placeholder="e.g., 9AM-5PM" {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}/>
-                </div>
-                <FormField
-                control={form.control}
-                name="availability"
-                render={() => (
-                    <FormItem>
-                    <div className="mb-4">
-                        <FormLabel className="text-base">Availability</FormLabel>
-                    </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4">
-                    {weekDays.map((day) => (
-                        <FormField
-                        key={day}
-                        control={form.control}
-                        name="availability"
-                        render={({ field }) => {
-                            return (
-                            <FormItem
-                                key={day}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                                <FormControl>
-                                <Checkbox
-                                    checked={field.value?.includes(day)}
-                                    onCheckedChange={(checked) => {
-                                    return checked
-                                        ? field.onChange([...(field.value || []), day])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                            (value) => value !== day
-                                            )
-                                        )
-                                    }}
-                                />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                {day}
-                                </FormLabel>
-                            </FormItem>
-                            )
-                        }}
-                        />
-                    ))}
-                    </div>
-                    <FormMessage />
-                    </FormItem>
+                {role === 'doctor' && (
+                  <FormField
+                    control={form.control}
+                    name="verified"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <FormLabel>Verified</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 )}
-                />
-              </>
-            )}
+              </div>
 
-            <DialogFooter className="sticky bottom-0 bg-background pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit">Save</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              {role === 'doctor' && (
+                <>
+                  <FormField control={form.control} name="specialization" render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Specialization</FormLabel>
+                      <FormControl><Input placeholder="e.g., Cardiology" {...field} /></FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="phone" render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl><Input placeholder="(123) 456-7890" {...field} /></FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}/>
+                      <FormField control={form.control} name="shift_hours" render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Shift Hours</FormLabel>
+                          <FormControl><Input placeholder="e.g., 9AM-5PM" {...field} /></FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}/>
+                  </div>
+                  <FormField
+                  control={form.control}
+                  name="availability"
+                  render={() => (
+                      <FormItem>
+                      <div className="mb-4">
+                          <FormLabel className="text-base">Availability</FormLabel>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4">
+                      {weekDays.map((day) => (
+                          <FormField
+                          key={day}
+                          control={form.control}
+                          name="availability"
+                          render={({ field }) => {
+                              return (
+                              <FormItem
+                                  key={day}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                  <FormControl>
+                                  <Checkbox
+                                      checked={field.value?.includes(day)}
+                                      onCheckedChange={(checked) => {
+                                      return checked
+                                          ? field.onChange([...(field.value || []), day])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                              (value) => value !== day
+                                              )
+                                          )
+                                      }}
+                                  />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                  {day}
+                                  </FormLabel>
+                              </FormItem>
+                              )
+                          }}
+                          />
+                      ))}
+                      </div>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                </>
+              )}
+            </form>
+          </Form>
+        </div>
+        <DialogFooter className="p-6 pt-0">
+          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button type="submit" form="staff-form" onClick={form.handleSubmit(onSubmit)}>Save</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
