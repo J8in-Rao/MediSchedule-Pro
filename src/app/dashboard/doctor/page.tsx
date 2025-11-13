@@ -48,18 +48,19 @@ export default function DoctorDashboardPage() {
     return query(collection(firestore, 'operation_schedules'), where('doctor_id', '==', user.uid));
   }, [firestore, user]);
 
-  const messagesQuery = useMemoFirebase(() => {
+  const alertsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
       collection(firestore, 'messages'),
       where('receiver_id', '==', user.uid),
-      where('read', '==', false)
+      where('read', '==', false),
+      where('type', '==', 'system')
     );
   }, [firestore, user]);
 
 
   const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
-  const { data: unreadMessages, isLoading: isLoadingMessages } = useCollection<SupportMessage>(messagesQuery);
+  const { data: unreadAlerts, isLoading: isLoadingAlerts } = useCollection<SupportMessage>(alertsQuery);
   
   // Filter and sort today's surgeries for display.
   const todaySurgeries = surgeries?.filter(s => isToday(new Date(s.date))).sort((a, b) => a.start_time.localeCompare(b.start_time));
@@ -86,7 +87,7 @@ export default function DoctorDashboardPage() {
   }, [surgeries]);
 
 
-  const isLoading = isLoadingSurgeries || isLoadingMessages;
+  const isLoading = isLoadingSurgeries || isLoadingAlerts;
 
   return (
     <div className="grid gap-6">
@@ -136,15 +137,15 @@ export default function DoctorDashboardPage() {
           </CardContent>
         </Card>
         </Link>
-        <Link href="/dashboard/my-messages">
+        <Link href="/dashboard/alerts">
          <Card className="hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Alerts</CardTitle>
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{unreadMessages?.length || 0}</div>
-             <p className="text-xs text-muted-foreground">{unreadMessages?.length || 0} new messages</p>
+            <div className="text-2xl font-bold">{unreadAlerts?.length || 0}</div>
+             <p className="text-xs text-muted-foreground">{unreadAlerts?.length || 0} new system alerts</p>
           </CardContent>
         </Card>
         </Link>

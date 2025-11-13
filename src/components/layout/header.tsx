@@ -20,10 +20,11 @@ import {
   Scissors,
   Send,
   FileText,
-  ClipboardList
+  ClipboardList,
+  Bell
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useTheme } from "next-themes";
 
 import {
@@ -51,6 +52,8 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { collection, query, where } from 'firebase/firestore';
+import type { SupportMessage } from '@/lib/types';
 
 const allMobileNavItems = [
   { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
@@ -63,6 +66,7 @@ const allMobileNavItems = [
   { href: '/dashboard/my-requests', icon: FileText, label: 'My Requests', roles: ['doctor'] },
   { href: '/dashboard/my-patients', icon: Users, label: 'Patients', roles: ['doctor'] },
   { href: '/dashboard/operations', icon: Scissors, label: 'Operations', roles: ['doctor'] },
+  { href: '/dashboard/alerts', icon: Bell, label: 'Alerts', roles: ['doctor'] },
   { href: '/dashboard/ots', icon: Hospital, label: 'OTs', roles: ['admin'] },
   { href: '/dashboard/resources', icon: Package, label: 'Resources', roles: ['admin'] },
   { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['admin'] },

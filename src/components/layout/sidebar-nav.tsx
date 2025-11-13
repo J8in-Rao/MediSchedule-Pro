@@ -22,8 +22,13 @@ import {
   Send,
   FileText,
   ClipboardList,
+  Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import type { SupportMessage } from '@/lib/types';
+
 
 const allNavItems = [
   // Admin Roles
@@ -42,6 +47,7 @@ const allNavItems = [
   { href: '/dashboard/my-requests', icon: FileText, label: 'My Requests', roles: ['doctor'] },
   { href: '/dashboard/operations', icon: Scissors, label: 'Operations', roles: ['doctor'] },
   { href: '/dashboard/my-patients', icon: Users, label: 'Patients', roles: ['doctor'] },
+  { href: '/dashboard/alerts', icon: Bell, label: 'Alerts', roles: ['doctor'] },
   { href: '/dashboard/my-messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },
 ];
 
@@ -51,9 +57,24 @@ type SidebarNavProps = {
 
 export default function SidebarNav({ userRole }: SidebarNavProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const firestore = useFirestore();
 
   const navItems = allNavItems.filter(item => userRole && item.roles.includes(userRole));
   const dashboardHref = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/doctor';
+
+  const unreadMessagesQuery = useMemoFirebase(() => {
+    if (!user || userRole !== 'doctor') return null;
+    return query(
+      collection(firestore, 'messages'),
+      where('receiver_id', '==', user.uid),
+      where('read', '==', false),
+      where('type', '==', 'manual')
+    );
+  }, [firestore, user, userRole]);
+
+  const { data: unreadMessages } = useCollection<SupportMessage>(unreadMessagesQuery);
+  const hasUnreadMessages = (unreadMessages?.length || 0) > 0;
 
 
   return (
@@ -68,25 +89,31 @@ export default function SidebarNav({ userRole }: SidebarNavProps) {
             <span className="sr-only">MediSchedule Pro</span>
           </Link>
 
-          {navItems.map((item) => (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                    {
-                      'bg-accent text-accent-foreground': pathname.startsWith(item.href),
-                    }
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span className="sr-only">{item.label}</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">{item.label}</TooltipContent>
-            </Tooltip>
-          ))}
+          {navItems.map((item) => {
+            const isMessages = item.href.includes('messages');
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
+                      {
+                        'bg-accent text-accent-foreground': pathname.startsWith(item.href),
+                      }
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {isMessages && hasUnreadMessages && (
+                      <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background" />
+                    )}
+                    <span className="sr-only">{item.label}</span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">{item.label}</TooltipContent>
+              </Tooltip>
+            );
+          })}
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
           <Tooltip>
