@@ -143,10 +143,9 @@ export default function MessagesPage() {
                 {selectedUserId ? `Chat history with ${userMap.get(selectedUserId)?.name}`: 'Select a user from the left to view messages.'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-             {selectedUserId ? (
-              <>
-                <ScrollArea className="flex-grow pr-4 -mr-4">
+            {selectedUserId ? (
+             <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+                <ScrollArea className="flex-grow px-6">
                    <div className="space-y-4">
                     {selectedUserMessages.map(msg => {
                         const senderInfo = userMap.get(msg.sender_id);
@@ -177,19 +176,18 @@ export default function MessagesPage() {
                     </div>
                 </ScrollArea>
                 <form
-                    className="flex w-full items-center space-x-2 pt-4 border-t"
+                    className="flex w-full items-center space-x-2 p-6 pt-4 border-t"
                     onSubmit={handleSubmit}
                 >
                     <Textarea name="message" placeholder="Type your reply..." className="flex-1 resize-none" rows={1}/>
                     <Button type="submit">Send</Button>
                 </form>
-              </>
+              </div>
             ) : (
-                 <div className="flex items-center justify-center h-full text-muted-foreground">
+                 <CardContent className="flex-1 flex items-center justify-center h-full text-muted-foreground">
                     <p>Select a conversation to start chatting.</p>
-                </div>
+                </CardContent>
             )}
-          </CardContent>
         </Card>
       </div>
     </>

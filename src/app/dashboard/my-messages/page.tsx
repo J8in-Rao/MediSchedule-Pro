@@ -82,62 +82,62 @@ export default function MyMessagesPage() {
         title="My Messages"
         description="Communicate with admins and other staff."
       />
-      <Card className="h-[70vh] flex flex-col">
+      <Card className="h-[75vh] flex flex-col">
         <CardHeader>
             <CardTitle>Chat with Admin</CardTitle>
             <CardDescription>Direct messages with the administrative team.</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden p-0">
-          <ScrollArea className="flex-1 px-6 py-4">
-            <div className="space-y-4">
-              {isLoading && <p>Loading messages...</p>}
-              {filteredMessages?.map(msg => {
-                const senderInfo = userMap.get(msg.sender_id);
-                const isSentByCurrentUser = msg.sender_id === user?.uid;
-                
-                return (
-                  <div key={msg.id} className={cn("flex items-end gap-2", isSentByCurrentUser ? 'justify-end' : 'justify-start')}>
-                    {!isSentByCurrentUser && (
-                       <Avatar className="h-8 w-8">
-                        <AvatarFallback>{senderInfo?.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isSentByCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                      <p className="font-bold text-sm">{senderInfo?.name}</p>
-                      <p className="text-sm">{msg.text}</p>
-                       <p className="text-xs text-right opacity-70 mt-1">
-                        {msg.timestamp && formatDistanceToNow(new Date((msg.timestamp as any).seconds * 1000), { addSuffix: true })}
-                      </p>
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+            <ScrollArea className="flex-grow px-6">
+                <div className="space-y-4 py-4">
+                {isLoading && <p className='text-center'>Loading messages...</p>}
+                {filteredMessages?.map(msg => {
+                    const senderInfo = userMap.get(msg.sender_id);
+                    const isSentByCurrentUser = msg.sender_id === user?.uid;
+                    
+                    return (
+                    <div key={msg.id} className={cn("flex items-end gap-2", isSentByCurrentUser ? 'justify-end' : 'justify-start')}>
+                        {!isSentByCurrentUser && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarFallback>{senderInfo?.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        )}
+                        <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isSentByCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                        <p className="font-bold text-sm">{senderInfo?.name}</p>
+                        <p className="text-sm">{msg.text}</p>
+                        <p className="text-xs text-right opacity-70 mt-1">
+                            {msg.timestamp && formatDistanceToNow(new Date((msg.timestamp as any).seconds * 1000), { addSuffix: true })}
+                        </p>
+                        </div>
+                        {isSentByCurrentUser && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarFallback>Y</AvatarFallback>
+                        </Avatar>
+                        )}
                     </div>
-                     {isSentByCurrentUser && (
-                       <Avatar className="h-8 w-8">
-                        <AvatarFallback>Y</AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                )
-              })}
-              {!isLoading && filteredMessages?.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">No messages yet. Start the conversation!</p>
-              )}
-            </div>
-          </ScrollArea>
-           <form
-            className="flex w-full items-center space-x-2 p-6 pt-4 border-t"
-            onSubmit={handleSubmit}
-          >
-            <Textarea
-              id="message"
-              name="message"
-              placeholder="Type your message..."
-              className="flex-1 resize-none"
-              rows={1}
-            />
-            <Button type="submit">
-              Send
-            </Button>
-          </form>
-        </CardContent>
+                    )
+                })}
+                {!isLoading && filteredMessages?.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No messages yet. Start the conversation!</p>
+                )}
+                </div>
+            </ScrollArea>
+            <form
+                className="flex w-full items-center space-x-2 p-6 pt-4 border-t"
+                onSubmit={handleSubmit}
+            >
+                <Textarea
+                id="message"
+                name="message"
+                placeholder="Type your message..."
+                className="flex-1 resize-none"
+                rows={1}
+                />
+                <Button type="submit">
+                Send
+                </Button>
+            </form>
+        </div>
       </Card>
     </>
   );
