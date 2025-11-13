@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,6 +64,21 @@ const formSchema = z.object({
   status: z.enum(["scheduled", "completed", "cancelled"]),
 });
 
+const generateTimeSlots = () => {
+  const slots = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hour = h.toString().padStart(2, '0');
+      const minute = m.toString().padStart(2, '0');
+      slots.push(`${hour}:${minute}`);
+    }
+  }
+  return slots;
+};
+
+const timeSlots = generateTimeSlots();
+
+
 type ScheduleFormProps = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -91,8 +107,8 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
       patient_id: "",
       doctor_id: "",
       date: new Date(),
-      start_time: "",
-      end_time: "",
+      start_time: "09:00",
+      end_time: "10:00",
       ot_id: "",
       anesthesia_type: "",
       anesthesiologist: "",
@@ -253,9 +269,18 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Start Time</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} />
-                        </FormControl>
+                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {timeSlots.map(slot => (
+                                <SelectItem key={`start-${slot}`} value={slot}>{slot}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -266,9 +291,18 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>End Time</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} />
-                        </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {timeSlots.map(slot => (
+                                <SelectItem key={`end-${slot}`} value={slot}>{slot}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -435,3 +469,5 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
     </Dialog>
   );
 }
+
+    
