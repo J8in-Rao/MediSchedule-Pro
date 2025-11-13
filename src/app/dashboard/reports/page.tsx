@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -18,13 +19,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 export default function ReportsPage() {
   const firestore = useFirestore();
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -29),
-    to: new Date(),
-  });
+  
+  const [startDate, setStartDate] = useState<Date | undefined>(addDays(new Date(), -29));
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+
 
   const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operation_schedules'), [firestore]);
   const { data: allSurgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesCollection);
@@ -38,17 +40,17 @@ export default function ReportsPage() {
   const isLoading = isLoadingSurgeries || isLoadingDoctors || isLoadingOts;
   
   const filteredSurgeries = useMemo(() => {
-    if (!allSurgeries || !date?.from) return [];
+    if (!allSurgeries || !startDate) return [];
     
     // Set time to the very start of the from date and very end of the to date
-    const fromDate = new Date(date.from.setHours(0, 0, 0, 0));
-    const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : fromDate;
+    const fromDate = new Date(startDate.setHours(0, 0, 0, 0));
+    const toDate = endDate ? new Date(endDate.setHours(23, 59, 59, 999)) : fromDate;
 
     return allSurgeries.filter(surgery => {
       const surgeryDate = new Date(surgery.date);
       return surgeryDate >= fromDate && surgeryDate <= toDate;
     });
-  }, [allSurgeries, date]);
+  }, [allSurgeries, startDate, endDate]);
 
   return (
     <>
@@ -59,37 +61,48 @@ export default function ReportsPage() {
         <Popover>
             <PopoverTrigger asChild>
               <Button
-                id="date"
                 variant={"outline"}
                 className={cn(
                   "w-[300px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
+                  !startDate && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {date?.from ? (
-                  date.to ? (
+                {startDate ? (
+                  endDate ? (
                     <>
-                      {format(date.from, "LLL dd, y")} -{" "}
-                      {format(date.to, "LLL dd, y")}
+                      {format(startDate, "LLL dd, y")} -{" "}
+                      {format(endDate, "LLL dd, y")}
                     </>
                   ) : (
-                    format(date.from, "LLL dd, y")
+                    format(startDate, "LLL dd, y")
                   )
                 ) : (
                   <span>Pick a date</span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
-                numberOfMonths={2}
-              />
+            <PopoverContent className="w-auto p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <p className="text-sm font-medium mb-2 text-center">Start Date</p>
+                        <Calendar
+                            mode="single"
+                            selected={startDate}
+                            onSelect={setStartDate}
+                            initialFocus
+                        />
+                    </div>
+                     <div>
+                        <p className="text-sm font-medium mb-2 text-center">End Date</p>
+                        <Calendar
+                            mode="single"
+                            selected={endDate}
+                            onSelect={setEndDate}
+                            initialFocus
+                        />
+                    </div>
+                </div>
             </PopoverContent>
           </Popover>
       </PageHeader>
