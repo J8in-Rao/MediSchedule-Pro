@@ -158,9 +158,12 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
     const surgeryData = {
       ...values,
       date: format(values.date, "yyyy-MM-dd"),
-      nurses: values.nurses?.split(',').map(n => n.trim()).filter(n => n),
-      drugs_used: values.drugs_used?.split(',').map(d => d.trim()).filter(d => d),
-      instruments: values.instruments?.split(',').map(i => i.trim()).filter(i => i),
+      nurses: values.nurses?.split(',').map(n => n.trim()).filter(n => n) || [],
+      drugs_used: values.drugs_used?.split(',').map(d => d.trim()).filter(d => d) || [],
+      instruments: values.instruments?.split(',').map(i => i.trim()).filter(i => i) || [],
+      report_url: values.report_url || null,
+      assistant_surgeon: values.assistant_surgeon || null,
+      remarks: values.remarks || null,
     };
 
     if (surgery) {
