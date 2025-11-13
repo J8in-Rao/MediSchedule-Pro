@@ -2,11 +2,11 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
-import type { OperationSchedule, Patient } from '@/lib/types';
+import { collection, query, where } from 'firebase/firestore';
+import type { OperationSchedule, Patient, SupportMessage } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ArrowRight, Bell, Check, Clock, ListTodo, User } from 'lucide-react';
+import { ArrowRight, Bell, Clock, ListTodo, User } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -48,18 +48,18 @@ export default function DoctorDashboardPage() {
     return query(collection(firestore, 'operation_schedules'), where('doctor_id', '==', user.uid));
   }, [firestore, user]);
 
-  // These hooks subscribe to the 'operation_schedules' and 'patients' collections in real-time.
-  // We need both to display patient names alongside surgery details.
+  const messagesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(firestore, 'messages'),
+      where('receiver_id', '==', user.uid),
+      where('read', '==', false)
+    );
+  }, [firestore, user]);
+
+
   const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
-  const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
-  const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
-  
-  // A map is created to efficiently look up patient names by their ID.
-  // This avoids repeatedly searching the patients array.
-  const patientMap = useMemo(() => {
-    if (!patients) return new Map();
-    return new Map(patients.map(p => [p.id, p.name]));
-  }, [patients]);
+  const { data: unreadMessages, isLoading: isLoadingMessages } = useCollection<SupportMessage>(messagesQuery);
   
   // Filter and sort today's surgeries for display.
   const todaySurgeries = surgeries?.filter(s => isToday(new Date(s.date))).sort((a, b) => a.start_time.localeCompare(b.start_time));
@@ -86,7 +86,7 @@ export default function DoctorDashboardPage() {
   }, [surgeries]);
 
 
-  const isLoading = isLoadingSurgeries || isLoadingPatients;
+  const isLoading = isLoadingSurgeries || isLoadingMessages;
 
   return (
     <div className="grid gap-6">
@@ -103,7 +103,7 @@ export default function DoctorDashboardPage() {
                 <div>
                   <p className="text-lg font-bold">{nextOperation.procedure}</p>
                   <p className="text-xs text-muted-foreground">
-                    {patientMap.get(nextOperation.patient_id)} at {nextOperation.start_time}
+                    {nextOperation.patientName} at {nextOperation.start_time}
                   </p>
                 </div>
               ) : (
@@ -143,9 +143,8 @@ export default function DoctorDashboardPage() {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {/* Note: Alert functionality is not yet implemented. This is a placeholder. */}
-            <div className="text-2xl font-bold">0</div>
-             <p className="text-xs text-muted-foreground">No new alerts</p>
+            <div className="text-2xl font-bold">{unreadMessages?.length || 0}</div>
+             <p className="text-xs text-muted-foreground">{unreadMessages?.length || 0} new messages</p>
           </CardContent>
         </Card>
         </Link>
@@ -166,7 +165,7 @@ export default function DoctorDashboardPage() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="flex-1 space-y-1">
                     <p className="font-semibold text-lg">{surgery.procedure}</p>
-                    <p className="text-sm text-muted-foreground">Patient: {patientMap.get(surgery.patient_id)}</p>
+                    <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
@@ -176,7 +175,7 @@ export default function DoctorDashboardPage() {
                     {/* Note: OT room number also needs to be fetched from the 'ot_rooms' collection. */}
                     <div className="font-medium">OT-{surgery.ot_id}</div>
                     <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
-                    <Link href="/dashboard/operations">
+                    <Link href={`/dashboard/operations?id=${surgery.id}`}>
                         <Button variant="ghost" size="sm">
                             <ArrowRight className="h-4 w-4" />
                         </Button>

@@ -21,11 +21,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import type { Patient } from '@/lib/types';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { PatientForm } from '@/components/patients/patient-form';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { toast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function PatientsPage() {
   const firestore = useFirestore();
@@ -34,6 +46,8 @@ export default function PatientsPage() {
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | undefined>(undefined);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
 
   const handleAdd = () => {
     setSelectedPatient(undefined);
@@ -43,6 +57,23 @@ export default function PatientsPage() {
   const handleEdit = (patient: Patient) => {
     setSelectedPatient(patient);
     setIsFormOpen(true);
+  };
+  
+  const handleDeleteClick = (patient: Patient) => {
+    setPatientToDelete(patient);
+    setIsAlertOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (patientToDelete) {
+      deleteDocumentNonBlocking(doc(firestore, 'patients', patientToDelete.id));
+      toast({
+        title: 'Patient Deleted',
+        description: `${patientToDelete.name} has been removed from the system.`,
+      });
+      setIsAlertOpen(false);
+      setPatientToDelete(null);
+    }
   };
 
 
@@ -104,7 +135,7 @@ export default function PatientsPage() {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleEdit(patient)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(patient)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -126,6 +157,21 @@ export default function PatientsPage() {
         setIsOpen={setIsFormOpen}
         patient={selectedPatient}
       />
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the patient record
+              and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPatientToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

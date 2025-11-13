@@ -2,21 +2,20 @@
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import type { Surgery } from '@/lib/types';
+import type { OperationSchedule } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
-function getStatusBadgeVariant(status: Surgery['status']) {
+function getStatusBadgeVariant(status: OperationSchedule['status']) {
   switch (status) {
-    case 'Completed':
+    case 'completed':
       return 'secondary';
-    case 'In Progress':
+    case 'scheduled':
       return 'default';
-    case 'Cancelled':
+    case 'cancelled':
       return 'destructive';
-    case 'Scheduled':
     default:
       return 'outline';
   }
@@ -28,13 +27,14 @@ export default function PatientDashboardPage() {
 
   const surgeriesQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(firestore, 'surgeries'), where('patientId', '==', user.uid));
+    // Assuming patient's user.uid is their patient_id in the schedules
+    return query(collection(firestore, 'operation_schedules'), where('patient_id', '==', user.uid));
   }, [firestore, user]);
 
-  const { data: surgeries, isLoading } = useCollection<Surgery>(surgeriesQuery);
+  const { data: surgeries, isLoading } = useCollection<OperationSchedule>(surgeriesQuery);
 
-  const upcomingSurgeries = surgeries?.filter(s => new Date(s.date) >= new Date() && s.status === 'Scheduled');
-  const pastSurgeries = surgeries?.filter(s => new Date(s.date) < new Date() || s.status !== 'Scheduled');
+  const upcomingSurgeries = surgeries?.filter(s => new Date(s.date) >= new Date() && s.status === 'scheduled');
+  const pastSurgeries = surgeries?.filter(s => new Date(s.date) < new Date() || s.status !== 'scheduled');
 
   return (
     <div className="grid gap-6">
@@ -57,9 +57,9 @@ export default function PatientDashboardPage() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4"/>
-                          <span>{surgery.startTime} - {surgery.endTime}</span>
+                          <span>{surgery.start_time} - {surgery.end_time}</span>
                       </div>
-                      <div className="font-medium">{surgery.room}</div>
+                      <div className="font-medium">OT-{surgery.ot_id}</div>
                       <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                   </div>
                 </div>
@@ -87,7 +87,7 @@ export default function PatientDashboardPage() {
                      <p className="text-sm">{format(new Date(surgery.date), 'MMMM d, yyyy')}</p>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="font-medium">{surgery.room}</div>
+                      <div className="font-medium">OT-{surgery.ot_id}</div>
                       <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                   </div>
                 </div>

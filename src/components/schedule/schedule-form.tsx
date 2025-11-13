@@ -155,9 +155,16 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
         toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
         return;
     }
+    
+    // Denormalize data
+    const patientName = patients.find(p => p.id === values.patient_id)?.name || 'Unknown Patient';
+    const doctorName = doctors.find(d => d.id === values.doctor_id)?.name || 'Unknown Doctor';
+
 
     const surgeryData = {
       ...values,
+      patientName,
+      doctorName,
       date: format(values.date, "yyyy-MM-dd"),
       nurses: values.nurses?.split(',').map(n => n.trim()).filter(n => n) || [],
       drugs_used: values.drugs_used?.split(',').map(d => d.trim()).filter(d => d) || [],

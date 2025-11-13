@@ -20,12 +20,24 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MoreHorizontal } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import type { Doctor, UserProfile } from '@/lib/types';
 import { useState, useMemo } from 'react';
 import { StaffForm } from '@/components/staff/staff-form';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { toast } from '@/hooks/use-toast';
 
 // Combined type for the staff list
 export type StaffMember = UserProfile & Partial<Doctor>;
@@ -42,6 +54,9 @@ export default function StaffPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | undefined>(undefined);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
+
 
   const staffMembers = useMemo(() => {
     if (!users || !doctors) return [];
@@ -66,6 +81,28 @@ export default function StaffPage() {
   const handleEdit = (staff: StaffMember) => {
     setSelectedStaff(staff);
     setIsFormOpen(true);
+  };
+
+  const handleDeleteClick = (staff: StaffMember) => {
+    setStaffToDelete(staff);
+    setIsAlertOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (staffToDelete) {
+      // Note: This only deletes the 'users' document.
+      // A robust solution would use a Firebase Function to delete the auth user and doctor doc.
+      deleteDocumentNonBlocking(doc(firestore, 'users', staffToDelete.id));
+      if (staffToDelete.role === 'doctor') {
+        deleteDocumentNonBlocking(doc(firestore, 'doctors', staffToDelete.id));
+      }
+      toast({
+        title: 'Staff Deleted',
+        description: `${staffToDelete.firstName} ${staffToDelete.lastName} has been removed. Auth user may need manual deletion.`,
+      });
+      setIsAlertOpen(false);
+      setStaffToDelete(null);
+    }
   };
 
   return (
@@ -144,7 +181,7 @@ export default function StaffPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleEdit(staff)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(staff)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -166,6 +203,21 @@ export default function StaffPage() {
         setIsOpen={setIsFormOpen}
         staff={selectedStaff}
       />
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the staff member's
+              user record and profile. The associated Firebase Auth user will need to be deleted manually.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setStaffToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

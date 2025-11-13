@@ -60,9 +60,6 @@ interface ScheduleTableProps {
 
 const MAX_VISIBLE_COLUMNS = 7;
 
-// This defines the shape of the data after we've processed it, adding readable names.
-type ProcessedSurgery = OperationSchedule & { patientName: string; doctorName: string; time: string; room: string; };
-
 export function ScheduleTable({ data, doctors, patients, operatingRooms, onAdd }: ScheduleTableProps) {
   const { toast } = useToast();
   // State management for TanStack Table features.
@@ -79,24 +76,20 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms, onAdd }
 
   // State for managing the details side panel.
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
-  const [selectedSurgery, setSelectedSurgery] = React.useState<ProcessedSurgery | null>(null);
+  const [selectedSurgery, setSelectedSurgery] = React.useState<OperationSchedule | null>(null);
 
   // This is a critical piece of logic. We process the raw data from Firestore here.
   // It maps IDs (like patient_id, doctor_id) to their corresponding names.
   // useMemo ensures this expensive operation only runs when the source data changes.
-  const processedData: ProcessedSurgery[] = React.useMemo(() => {
-    const patientMap = new Map(patients.map(p => [p.id, p.name]));
-    const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
+  const processedData: OperationSchedule[] = React.useMemo(() => {
+    // Data is now denormalized and comes directly from the parent
     const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
-
     return data.map(surgery => ({
       ...surgery,
-      patientName: patientMap.get(surgery.patient_id) || 'Unknown Patient',
-      doctorName: doctorMap.get(surgery.doctor_id) || 'Unknown Doctor',
+      room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`,
       time: `${surgery.start_time} - ${surgery.end_time}`,
-      room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`
     }));
-  }, [data, patients, doctors, operatingRooms]);
+  }, [data, operatingRooms]);
 
   // This function is passed to the columns definition.
   // It sets the selected surgery and opens the details panel.

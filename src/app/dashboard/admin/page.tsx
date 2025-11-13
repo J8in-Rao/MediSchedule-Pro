@@ -121,10 +121,8 @@ export default function AdminDashboardPage() {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex-1 space-y-1">
                       <p className="font-semibold text-lg">{surgery.procedure}</p>
-                      {/* Note: Patient and Doctor names are currently just IDs.
-                          For Phase 2, we should fetch the corresponding documents to display full names. */}
-                      <p className="text-sm text-muted-foreground">Patient: {surgery.patient_id}</p>
-                      <p className="text-sm text-muted-foreground">Doctor: {surgery.doctor_id}</p>
+                      <p className="text-sm text-muted-foreground">Patient: {surgery.patientName || surgery.patient_id}</p>
+                      <p className="text-sm text-muted-foreground">Doctor: {surgery.doctorName || surgery.doctor_id}</p>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">

@@ -27,13 +27,24 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 const otFormSchema = z.object({
   room_number: z.string().min(1, "Room number is required"),
@@ -148,6 +159,8 @@ export default function OTsPage() {
   const { data: ots, isLoading } = useCollection<OperatingRoom>(otsCollection);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedOt, setSelectedOt] = useState<OperatingRoom | undefined>(undefined);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [otToDelete, setOtToDelete] = useState<OperatingRoom | null>(null);
   
   const handleAdd = () => {
     setSelectedOt(undefined);
@@ -158,6 +171,24 @@ export default function OTsPage() {
     setSelectedOt(ot);
     setIsFormOpen(true);
   }
+
+  const handleDeleteClick = (ot: OperatingRoom) => {
+    setOtToDelete(ot);
+    setIsAlertOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (otToDelete) {
+      deleteDocumentNonBlocking(doc(firestore, 'ot_rooms', otToDelete.id));
+      toast({
+        title: 'OT Deleted',
+        description: `Operating room ${otToDelete.room_number} has been deleted.`,
+      });
+      setIsAlertOpen(false);
+      setOtToDelete(null);
+    }
+  };
+
 
   return (
     <>
@@ -208,7 +239,7 @@ export default function OTsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleEdit(ot)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(ot)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -226,6 +257,21 @@ export default function OTsPage() {
         </CardContent>
       </Card>
       <OTForm isOpen={isFormOpen} setIsOpen={setIsFormOpen} ot={selectedOt} />
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the operating room
+              and could affect scheduled surgeries.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOtToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

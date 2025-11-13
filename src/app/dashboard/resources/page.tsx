@@ -32,9 +32,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { toast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 const resourceFormSchema = z.object({
   name: z.string().min(1, "Resource name is required"),
@@ -167,6 +178,8 @@ export default function ResourcesPage() {
   const { data: resources, isLoading } = useCollection<Resource>(resourcesCollection);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<Resource | undefined>(undefined);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(null);
   
   const handleAdd = () => {
     setSelectedResource(undefined);
@@ -177,6 +190,23 @@ export default function ResourcesPage() {
     setSelectedResource(resource);
     setIsFormOpen(true);
   }
+
+  const handleDeleteClick = (resource: Resource) => {
+    setResourceToDelete(resource);
+    setIsAlertOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (resourceToDelete) {
+      deleteDocumentNonBlocking(doc(firestore, 'resources', resourceToDelete.id));
+      toast({
+        title: 'Resource Deleted',
+        description: `Resource ${resourceToDelete.name} has been deleted.`,
+      });
+      setIsAlertOpen(false);
+      setResourceToDelete(null);
+    }
+  };
 
   return (
     <>
@@ -231,7 +261,7 @@ export default function ResourcesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleEdit(resource)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(resource)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -249,6 +279,20 @@ export default function ResourcesPage() {
         </CardContent>
       </Card>
       <ResourceForm isOpen={isFormOpen} setIsOpen={setIsFormOpen} resource={selectedResource} />
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the resource from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setResourceToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
