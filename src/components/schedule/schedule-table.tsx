@@ -34,6 +34,7 @@ import { PlusCircle, ChevronDown } from "lucide-react";
 import { getColumns } from "./schedule-columns";
 import { Doctor, Patient, OperationSchedule } from "@/lib/types";
 import { ScheduleForm } from "./schedule-form";
+import { ScheduleDetails } from "./schedule-details";
 
 interface ScheduleTableProps {
   data: OperationSchedule[];
@@ -47,11 +48,31 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
+  const [selectedSurgery, setSelectedSurgery] = React.useState<OperationSchedule | null>(null);
 
-  const columns = React.useMemo(() => getColumns({ doctors, patients }), [doctors, patients]);
+  const handleViewDetails = (surgery: OperationSchedule) => {
+    setSelectedSurgery(surgery);
+    setIsDetailsOpen(true);
+  };
+  
+  const columns = React.useMemo(() => getColumns({ onViewDetails: handleViewDetails }), [doctors, patients]);
+
+  const processedData = React.useMemo(() => {
+    const patientMap = new Map(patients.map(p => [p.id, p.name]));
+    const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
+
+    return data.map(surgery => ({
+      ...surgery,
+      patientName: patientMap.get(surgery.patient_id) || 'Unknown Patient',
+      doctorName: doctorMap.get(surgery.doctor_id) || 'Unknown Doctor',
+      time: `${surgery.start_time} - ${surgery.end_time}`,
+    }));
+  }, [data, patients, doctors]);
+
 
   const table = useReactTable({
-    data,
+    data: processedData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -190,8 +211,13 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
         doctors={doctors}
         patients={patients}
       />
+       {selectedSurgery && (
+        <ScheduleDetails
+            isOpen={isDetailsOpen}
+            setIsOpen={setIsDetailsOpen}
+            surgery={selectedSurgery}
+        />
+      )}
     </div>
   );
 }
-
-    

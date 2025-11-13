@@ -2,39 +2,27 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from 'date-fns';
-import { MoreHorizontal } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Doctor, Patient, OperationSchedule } from "@/lib/types";
-import { useState } from "react";
-import { ScheduleForm } from "./schedule-form";
+import { OperationSchedule } from "@/lib/types";
 
 type GetColumnsProps = {
-  doctors: Doctor[];
-  patients: Patient[];
+  onViewDetails: (surgery: OperationSchedule) => void;
 }
 
 const getStatusBadgeVariant = (status: OperationSchedule['status']) => {
   switch (status) {
-    case 'Completed': return 'secondary';
-    case 'In Progress': return 'default';
-    case 'Cancelled': return 'destructive';
-    case 'Scheduled':
-    default: return 'outline';
+    case 'completed': return 'secondary';
+    case 'cancelled': return 'destructive';
+    case 'scheduled':
+    default: return 'default';
   }
 }
 
-export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<OperationSchedule>[] => [
+export const getColumns = ({ onViewDetails }: GetColumnsProps): ColumnDef<OperationSchedule>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -75,14 +63,13 @@ export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<Op
     cell: ({ row }) => format(new Date(row.getValue("date")), 'PPP'),
   },
   {
-    accessorKey: "startTime",
+    accessorKey: "time",
     header: "Time",
-    cell: ({ row }) => `${row.original.startTime} - ${row.original.endTime}`,
   },
   {
-    accessorKey: "otId",
+    accessorKey: "ot_id",
     header: "Room",
-    cell: ({ row }) => `OT-${row.original.otId}`,
+    cell: ({ row }) => `OT-${row.original.ot_id}`,
   },
   {
     accessorKey: "status",
@@ -97,40 +84,13 @@ export const getColumns = ({ doctors, patients }: GetColumnsProps): ColumnDef<Op
     enableHiding: false,
     cell: ({ row }) => {
       const surgery = row.original;
-      const [isFormOpen, setIsFormOpen] = useState(false);
 
       return (
-        <>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(surgery.id)}
-            >
-              Copy Operation ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsFormOpen(true)}>Edit Operation</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Delete Operation</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <ScheduleForm 
-            isOpen={isFormOpen}
-            setIsOpen={setIsFormOpen}
-            doctors={doctors}
-            patients={patients}
-            surgery={surgery}
-          />
-        </>
+         <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => onViewDetails(surgery)}>
+            <span className="sr-only">View Details</span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
       );
     },
   },
 ];
-
-    
