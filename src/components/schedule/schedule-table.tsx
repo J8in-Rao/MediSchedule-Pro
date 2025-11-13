@@ -46,6 +46,8 @@ interface ScheduleTableProps {
 
 const MAX_VISIBLE_COLUMNS = 7;
 
+type ProcessedSurgery = OperationSchedule & { patientName: string; doctorName: string; time: string; room: string; };
+
 export function ScheduleTable({ data, doctors, patients, operatingRooms }: ScheduleTableProps) {
   const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -60,16 +62,9 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms }: Sched
   const [rowSelection, setRowSelection] = React.useState({});
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
-  const [selectedSurgery, setSelectedSurgery] = React.useState<OperationSchedule | null>(null);
+  const [selectedSurgery, setSelectedSurgery] = React.useState<ProcessedSurgery | null>(null);
 
-  const handleViewDetails = (surgery: OperationSchedule) => {
-    setSelectedSurgery(surgery);
-    setIsDetailsOpen(true);
-  };
-  
-  const columns = React.useMemo(() => getColumns({ onViewDetails: handleViewDetails }), []);
-
-  const processedData = React.useMemo(() => {
+  const processedData: ProcessedSurgery[] = React.useMemo(() => {
     const patientMap = new Map(patients.map(p => [p.id, p.name]));
     const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
     const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
@@ -82,6 +77,15 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms }: Sched
       room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`
     }));
   }, [data, patients, doctors, operatingRooms]);
+
+  const handleViewDetails = (surgery: OperationSchedule) => {
+    // Find the fully processed surgery object to pass to the details view
+    const fullSurgeryDetails = processedData.find(p => p.id === surgery.id);
+    setSelectedSurgery(fullSurgeryDetails || null);
+    setIsDetailsOpen(true);
+  };
+  
+  const columns = React.useMemo(() => getColumns({ onViewDetails: handleViewDetails }), [processedData]);
 
 
   const table = useReactTable({

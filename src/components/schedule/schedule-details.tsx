@@ -14,7 +14,7 @@ import { Separator } from '../ui/separator';
 type ScheduleDetailsProps = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  surgery: OperationSchedule;
+  surgery: OperationSchedule & { room?: string };
 };
 
 const DetailItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
@@ -53,7 +53,7 @@ export function ScheduleDetails({ isOpen, setIsOpen, surgery }: ScheduleDetailsP
           <div className="grid grid-cols-2 gap-x-4 gap-y-6">
             <DetailItem label="Patient" value={surgery.patientName} />
             <DetailItem label="Doctor" value={surgery.doctorName} />
-            <DetailItem label="Operating Room" value={`OT-${surgery.ot_id}`} />
+            <DetailItem label="Operating Room" value={surgery.room} />
             <DetailItem label="Anesthesiologist" value={surgery.anesthesiologist} />
             <DetailItem label="Anesthesia Type" value={surgery.anesthesia_type} />
             <DetailItem label="Assistant Surgeon" value={surgery.assistant_surgeon} />
