@@ -1,9 +1,7 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
 import { addDays, format } from "date-fns";
-import { DateRange } from "react-day-picker";
 import { Calendar as CalendarIcon } from 'lucide-react';
 
 import { PageHeader } from '@/components/shared/page-header';
@@ -19,7 +17,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 
 export default function ReportsPage() {
   const firestore = useFirestore();
@@ -27,6 +24,19 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState<Date | undefined>(addDays(new Date(), -29));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
 
+  const handleStartDateSelect = (date: Date | undefined) => {
+    setStartDate(date);
+    if (date && endDate && date > endDate) {
+      setEndDate(date); // Clamp end date
+    }
+  };
+
+  const handleEndDateSelect = (date: Date | undefined) => {
+    setEndDate(date);
+    if (date && startDate && date < startDate) {
+      setStartDate(date); // Clamp start date
+    }
+  };
 
   const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operation_schedules'), [firestore]);
   const { data: allSurgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesCollection);
@@ -89,7 +99,7 @@ export default function ReportsPage() {
                         <Calendar
                             mode="single"
                             selected={startDate}
-                            onSelect={setStartDate}
+                            onSelect={handleStartDateSelect}
                             initialFocus
                         />
                     </div>
@@ -98,7 +108,7 @@ export default function ReportsPage() {
                         <Calendar
                             mode="single"
                             selected={endDate}
-                            onSelect={setEndDate}
+                            onSelect={handleEndDateSelect}
                             initialFocus
                         />
                     </div>
