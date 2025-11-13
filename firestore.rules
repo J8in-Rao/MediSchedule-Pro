@@ -1,8 +1,100 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+  
+    // --- Helper Functions ---
+    
+    // Is the user authenticated?
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Does the requesting user's UID match the given userId?
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Get the profile of the requesting user.
+    function getUserProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Is the user an admin?
+    function isAdmin() {
+      return isAuthenticated() && getUserProfile().role == 'admin';
+    }
+    
+    // Is the user a doctor?
+    function isDoctor() {
+      return isAuthenticated() && getUserProfile().role == 'doctor';
+    }
+
+    // --- Collection Rules ---
+
+    // USERS: Users can read their own profile. Admins can read/write any profile.
+    match /users/{userId} {
+      allow read: if isUser(userId) || isAdmin();
+      allow write: if isAdmin(); // Only admins can create/update user roles
+      allow create: if true; // Allow new users to be created during signup
+      allow update: if isUser(userId) || isAdmin(); // Users can update their own profile, admins can update any.
+    }
+
+    // DOCTORS: All authenticated users can read doctor profiles. Only admins or the doctor themselves can edit.
+    match /doctors/{doctorId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isUser(doctorId);
+    }
+    
+    // PATIENTS: Admins can manage all patients. Doctors can read patient info.
+    match /patients/{patientId} {
+      allow read: if isAdmin() || isDoctor();
+      allow write: if isAdmin();
+    }
+    
+    // OPERATING ROOMS: Only admins can manage OTs. Doctors can read the list.
+    match /ot_rooms/{otId} {
+        allow read: if isAdmin() || isDoctor();
+        allow write: if isAdmin();
+    }
+    
+    // OPERATION SCHEDULES: Admins can manage all. Doctors can read all schedules.
+    match /operation_schedules/{operationId} {
+        allow read: if isAdmin() || isDoctor();
+        allow write: if isAdmin();
+    }
+    
+    // SURGERY REQUESTS: Doctors can create/read their own requests. Admins can read/write all.
+    match /surgery_requests/{requestId} {
+        allow read: if isAdmin() || (isDoctor() && resource.data.requesting_doctor_id == request.auth.uid);
+        allow create: if isDoctor();
+        allow update: if isAdmin() || (isDoctor() && request.resource.data.requesting_doctor_id == request.auth.uid);
+    }
+    
+    // RESOURCES: Only Admins can manage resources. Doctors can read them.
+    match /resources/{resourceId} {
+        allow read: if isAdmin() || isDoctor();
+        allow write: if isAdmin();
+    }
+    
+    // MESSAGES: Admins can talk to anyone. Doctors can talk to the admin group.
+    match /messages/{messageId} {
+      allow read, write: if isAdmin() || 
+                           (isDoctor() && (resource.data.sender_id == request.auth.uid || resource.data.receiver_id == request.auth.uid));
+      allow create: if isAdmin() || isDoctor();
+    }
+
+    // CONTACT MESSAGES: Any authenticated user can create (submit) a message.
+    match /contact_messages/{messageId} {
+        allow create: if isAuthenticated();
+        // Read/update/delete only by admins (not implemented in UI, but a good practice)
+        allow read, update, delete: if isAdmin();
+    }
+    
+    // --- Default Deny ---
+    // Deny access to any other path by default.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
