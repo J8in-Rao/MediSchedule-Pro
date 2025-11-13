@@ -7,7 +7,7 @@ import { Activity, CheckCircle, Clock, Users, Hospital, Edit } from 'lucide-reac
 import { collection, query, where } from 'firebase/firestore';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
-import type { OperationSchedule, Patient, Doctor, OperatingRoom } from '@/lib/types';
+import type { OperationSchedule, Patient, Doctor, OperatingRoom, SurgeryRequest } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
@@ -60,12 +60,15 @@ export default function AdminDashboardPage() {
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
   const otsCollection = useMemoFirebase(() => collection(firestore, 'ot_rooms'), [firestore]);
+  const requestsCollection = useMemoFirebase(() => collection(firestore, 'surgery_requests'), [firestore]);
+
 
   // Hooks to fetch the data
   const { data: selectedDateSurgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
   const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
   const { data: doctors, isLoading: isLoadingDoctors } = useCollection<Doctor>(doctorsCollection);
   const { data: operatingRooms, isLoading: isLoadingOts } = useCollection<OperatingRoom>(otsCollection);
+  const { data: requests, isLoading: isLoadingRequests } = useCollection<SurgeryRequest>(requestsCollection);
   
   // This hook processes the raw surgery data, mapping IDs to human-readable names.
   // It only re-runs when the source data changes, which is efficient.
@@ -93,7 +96,7 @@ export default function AdminDashboardPage() {
     scheduled: selectedDateSurgeries?.filter((s) => s.status === 'scheduled').length || 0,
   };
   
-  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingDoctors || isLoadingOts;
+  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingDoctors || isLoadingOts || isLoadingRequests;
   
   const handleViewDetails = (surgery: OperationSchedule) => {
     setSelectedSurgery(surgery);
@@ -105,6 +108,17 @@ export default function AdminDashboardPage() {
     setIsDetailsOpen(false); // Close details sheet
     setIsFormOpen(true); // Open form dialog
   };
+
+  const getRequestForSurgery = (surgery: OperationSchedule | null): SurgeryRequest | undefined => {
+    if (!surgery || !requests) return undefined;
+    // A robust solution would involve storing the `requestId` on the `OperationSchedule` document.
+    return requests.find(req => 
+      req.status === 'Scheduled' &&
+      req.patient_id === surgery.patient_id &&
+      req.requesting_doctor_id === surgery.doctor_id &&
+      req.procedure_name === surgery.procedure
+    );
+  }
 
 
   return (
@@ -226,6 +240,7 @@ export default function AdminDashboardPage() {
                 surgery={selectedSurgery}
                 doctors={doctors || []}
                 patients={patients || []}
+                request={getRequestForSurgery(selectedSurgery)}
             />
         </>
       )}
