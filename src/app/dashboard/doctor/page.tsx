@@ -3,10 +3,10 @@
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import type { OperationSchedule, Patient, SupportMessage } from '@/lib/types';
+import type { OperationSchedule, Patient, SupportMessage, OperatingRoom } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Bell, Clock, ListTodo, User } from 'lucide-react';
+import { ArrowRight, Bell, Clock, Hospital, ListTodo, User } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -57,13 +57,34 @@ export default function DoctorDashboardPage() {
       where('type', '==', 'system')
     );
   }, [firestore, user]);
+  
+  const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
+  const otsCollection = useMemoFirebase(() => collection(firestore, 'ot_rooms'), [firestore]);
 
 
   const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
   const { data: unreadAlerts, isLoading: isLoadingAlerts } = useCollection<SupportMessage>(alertsQuery);
+  const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
+  const { data: operatingRooms, isLoading: isLoadingOts } = useCollection<OperatingRoom>(otsCollection);
+
+  // This hook processes the raw surgery data, mapping IDs to human-readable names.
+  // It only re-runs when the source data changes, which is efficient.
+  const processedSurgeries = useMemo(() => {
+    if (!surgeries || !patients || !operatingRooms) return [];
+    
+    const patientMap = new Map(patients.map(p => [p.id, p.name]));
+    const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
+
+    return surgeries.map(surgery => ({
+      ...surgery,
+      patientName: patientMap.get(surgery.patient_id) || surgery.patient_id,
+      room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`
+    }));
+  }, [surgeries, patients, operatingRooms]);
+
   
   // Filter and sort today's surgeries for display.
-  const todaySurgeries = surgeries?.filter(s => isToday(new Date(s.date))).sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const todaySurgeries = processedSurgeries?.filter(s => isToday(new Date(s.date))).sort((a, b) => a.start_time.localeCompare(b.start_time));
   
   // Logic to find the very next scheduled operation for the "Next Operation" card.
   const nextOperation = todaySurgeries?.find(s => {
@@ -87,7 +108,7 @@ export default function DoctorDashboardPage() {
   }, [surgeries]);
 
 
-  const isLoading = isLoadingSurgeries || isLoadingAlerts;
+  const isLoading = isLoadingSurgeries || isLoadingAlerts || isLoadingPatients || isLoadingOts;
 
   return (
     <div className="grid gap-6">
@@ -168,13 +189,15 @@ export default function DoctorDashboardPage() {
                     <p className="font-semibold text-lg">{surgery.procedure}</p>
                     <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center flex-wrap justify-end gap-x-4 gap-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       <span>{surgery.start_time} - {surgery.end_time}</span>
                     </div>
-                    {/* Note: OT room number also needs to be fetched from the 'ot_rooms' collection. */}
-                    <div className="font-medium">OT-{surgery.ot_id}</div>
+                    <div className="font-medium flex items-center gap-2">
+                        <Hospital className="w-4 h-4"/>
+                        {surgery.room}
+                    </div>
                     <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                     <Link href={`/dashboard/operations?id=${surgery.id}`}>
                         <Button variant="ghost" size="sm">
