@@ -13,13 +13,12 @@ import { Badge } from '@/components/ui/badge';
 
 function getStatusBadgeVariant(status: OperationSchedule['status']) {
   switch (status) {
-    case 'Completed':
+    case 'completed':
       return 'secondary';
-    case 'In Progress':
+    case 'scheduled':
       return 'default';
-    case 'Cancelled':
+    case 'cancelled':
       return 'destructive';
-    case 'Scheduled':
     default:
       return 'outline';
   }
@@ -32,16 +31,16 @@ export default function AdminDashboardPage() {
   const surgeriesQuery = useMemoFirebase(() => {
     if (!date) return null;
     const dateString = format(date, 'yyyy-MM-dd');
-    return query(collection(firestore, 'operations'), where('date', '==', dateString));
+    return query(collection(firestore, 'operation_schedules'), where('date', '==', dateString));
   }, [firestore, date]);
 
   const { data: selectedDateSurgeries, isLoading } = useCollection<OperationSchedule>(surgeriesQuery);
 
   const stats = {
     total: selectedDateSurgeries?.length || 0,
-    completed: selectedDateSurgeries?.filter((s) => s.status === 'Completed').length || 0,
-    inProgress: selectedDateSurgeries?.filter((s) => s.status === 'In Progress').length || 0,
-    scheduled: selectedDateSurgeries?.filter((s) => s.status === 'Scheduled').length || 0,
+    completed: selectedDateSurgeries?.filter((s) => s.status === 'completed').length || 0,
+    inProgress: selectedDateSurgeries?.filter((s) => s.status !== 'completed' && s.status !== 'cancelled' && s.status !== 'scheduled').length || 0,
+    scheduled: selectedDateSurgeries?.filter((s) => s.status === 'scheduled').length || 0,
   };
 
   return (
@@ -99,15 +98,15 @@ export default function AdminDashboardPage() {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex-1 space-y-1">
                       <p className="font-semibold text-lg">{surgery.procedure}</p>
-                      <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
-                      <p className="text-sm text-muted-foreground">Doctor: {surgery.doctorName}</p>
+                      <p className="text-sm text-muted-foreground">Patient: {surgery.patient_id}</p>
+                      <p className="text-sm text-muted-foreground">Doctor: {surgery.doctor_id}</p>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4"/>
-                            <span>{surgery.startTime} - {surgery.endTime}</span>
+                            <span>{surgery.start_time} - {surgery.end_time}</span>
                         </div>
-                        <div className="font-medium">OT-{surgery.otId}</div>
+                        <div className="font-medium">OT-{surgery.ot_id}</div>
                         <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                     </div>
                   </div>
@@ -135,5 +134,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    

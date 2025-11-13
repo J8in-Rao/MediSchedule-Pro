@@ -8,7 +8,7 @@ import type { OperationSchedule, Doctor, Patient } from '@/lib/types';
 
 export default function SchedulePage() {
   const firestore = useFirestore();
-  const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operations'), [firestore]);
+  const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operation_schedules'), [firestore]);
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   
@@ -34,5 +34,3 @@ export default function SchedulePage() {
     </>
   );
 }
-
-    

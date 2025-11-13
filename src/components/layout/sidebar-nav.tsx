@@ -15,7 +15,6 @@ import {
   Users,
   BarChart,
   Settings,
-  ShieldAlert,
   Hospital,
   Package,
 } from 'lucide-react';
@@ -95,5 +94,3 @@ export default function SidebarNav({ userRole }: SidebarNavProps) {
     </aside>
   );
 }
-
-    
