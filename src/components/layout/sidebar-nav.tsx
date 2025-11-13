@@ -17,18 +17,26 @@ import {
   Settings,
   Hospital,
   Package,
+  MessageSquare,
+  Scissors,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const allNavItems = [
+  // Admin Roles
   { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
-  { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
   { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
   { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },
   { href: '/dashboard/ots', icon: Hospital, label: 'OTs', roles: ['admin'] },
   { href: '/dashboard/resources', icon: Package, label: 'Resources', roles: ['admin'] },
   { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['admin'] },
+  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['admin'] },
+  // Doctor Roles
+  { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
+  { href: '/dashboard/operations', icon: Scissors, label: 'Operations', roles: ['doctor'] },
+  { href: '/dashboard/my-patients', icon: Users, label: 'Patients', roles: ['doctor'] },
+  { href: '/dashboard/my-messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },
 ];
 
 type SidebarNavProps = {

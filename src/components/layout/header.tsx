@@ -12,11 +12,12 @@ import {
   Users,
   BarChart,
   User,
-  Shield,
   Hospital,
   Package,
   Moon,
-  Sun
+  Sun,
+  MessageSquare,
+  Scissors
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -54,9 +55,13 @@ const allMobileNavItems = [
   { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
   { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },
+  { href: '/dashboard/my-patients', icon: Users, label: 'Patients', roles: ['doctor'] },
+  { href: '/dashboard/operations', icon: Scissors, label: 'Operations', roles: ['doctor'] },
   { href: '/dashboard/ots', icon: Hospital, label: 'OTs', roles: ['admin'] },
   { href: '/dashboard/resources', icon: Package, label: 'Resources', roles: ['admin'] },
   { href: '/dashboard/reports', icon: BarChart, label: 'Reports', roles: ['admin'] },
+  { href: '/dashboard/my-messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },
+  { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['admin'] },
 ];
 
 type HeaderProps = {
@@ -142,7 +147,7 @@ export default function Header({ userRole }: HeaderProps) {
              <React.Fragment key={index}>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="capitalize">{part}</BreadcrumbPage>
+                  <BreadcrumbPage className="capitalize">{part.replace('-', ' ')}</BreadcrumbPage>
                 </BreadcrumbItem>
               </React.Fragment>
           ))}

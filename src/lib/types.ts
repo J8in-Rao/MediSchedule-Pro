@@ -102,6 +102,9 @@ export type SupportMessage = {
   timestamp: { seconds: number; nanoseconds: number } | Date;
   read: boolean;
   type: 'system' | 'manual';
+  // Client-side additions
+  userName?: string;
+  userEmail?: string;
+  status?: 'New' | 'Read' | 'Resolved';
+  message?: string;
 };
-
-    
