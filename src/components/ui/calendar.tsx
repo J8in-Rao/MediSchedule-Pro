@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import { DayPicker, DayContentProps } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -60,6 +60,23 @@ function Calendar({
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
+        DayContent: (props: DayContentProps) => {
+          const { date, activeModifiers } = props;
+          const originalContent = <>{date.getDate()}</>;
+
+          // For the default DayContent component.
+          if (!props.activeModifiers.scheduled) {
+            return originalContent
+          }
+
+          // When custom components are passed, this returns the custom component
+          // It needs to be handled within the page itself.
+          return (
+             <div className="relative">
+                {originalContent}
+            </div>
+          );
+        }
       }}
       {...props}
     />

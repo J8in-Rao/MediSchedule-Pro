@@ -20,12 +20,11 @@ import { Button } from '@/components/ui/button';
  * 
  * This page provides a high-level overview of the day's surgical operations.
  * Key features include:
- * - A calendar for date selection.
+ * - A calendar for date selection with indicators for days that have surgeries.
  * - Statistics cards showing total, completed, in-progress, and scheduled surgeries for the selected day.
  * - A detailed list of surgeries for the selected day with key information like procedure, patient, doctor, and status.
  * 
- * The component fetches data in real-time from the 'operation_schedules' collection in Firestore
- * based on the selected date.
+ * The component fetches data in real-time from the 'operation_schedules' collection in Firestore.
  */
 
 // Helper function to determine the visual style of the status badge based on the surgery's status.
@@ -57,13 +56,14 @@ export default function AdminDashboardPage() {
     return query(collection(firestore, 'operation_schedules'), where('date', '==', dateString));
   }, [firestore, date]);
   
+  const allSurgeriesQuery = useMemoFirebase(() => collection(firestore, 'operation_schedules'), [firestore]);
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
   const otsCollection = useMemoFirebase(() => collection(firestore, 'ot_rooms'), [firestore]);
   const requestsCollection = useMemoFirebase(() => collection(firestore, 'surgery_requests'), [firestore]);
 
-
   // Hooks to fetch the data
+  const { data: allSurgeries, isLoading: isLoadingAllSurgeries } = useCollection<OperationSchedule>(allSurgeriesQuery);
   const { data: selectedDateSurgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
   const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
   const { data: doctors, isLoading: isLoadingDoctors } = useCollection<Doctor>(doctorsCollection);
@@ -86,6 +86,22 @@ export default function AdminDashboardPage() {
       room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`
     }));
   }, [selectedDateSurgeries, patients, doctors, operatingRooms]);
+  
+  // Memoize the set of dates with surgeries for calendar indicators
+  const surgeryDates = useMemo(() => {
+    if (!allSurgeries) return new Set();
+    return new Set(allSurgeries.map(s => format(new Date(s.date), 'yyyy-MM-dd')));
+  }, [allSurgeries]);
+  
+  const calendarModifiers = {
+    scheduled: (day: Date) => surgeryDates.has(format(day, 'yyyy-MM-dd')),
+  };
+
+  const calendarModifierStyles = {
+    scheduled: {
+      position: 'relative' as React.CSSProperties['position'],
+    },
+  };
 
 
   // Calculate statistics based on the fetched surgery data.
@@ -96,7 +112,7 @@ export default function AdminDashboardPage() {
     scheduled: selectedDateSurgeries?.filter((s) => s.status === 'scheduled').length || 0,
   };
   
-  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingDoctors || isLoadingOts || isLoadingRequests;
+  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingDoctors || isLoadingOts || isLoadingRequests || isLoadingAllSurgeries;
   
   const handleViewDetails = (surgery: OperationSchedule) => {
     setSelectedSurgery(surgery);
@@ -215,12 +231,25 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-4 xl:col-span-2 space-y-4">
           <Card>
             <CardContent className="p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="w-full"
-              />
+                <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    modifiers={calendarModifiers}
+                    modifiersStyles={calendarModifierStyles}
+                    className="w-full"
+                    components={{
+                        DayContent: (props) => {
+                            const { date, activeModifiers } = props;
+                            return (
+                                <>
+                                    <span>{format(date, 'd')}</span>
+                                    {activeModifiers.scheduled && <div className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary" />}
+                                </>
+                            );
+                        },
+                    }}
+                />
             </CardContent>
           </Card>
         </div>

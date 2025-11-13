@@ -1,5 +1,10 @@
 'use client';
 
+import { useState, useMemo } from 'react';
+import { addDays, format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { Calendar as CalendarIcon } from 'lucide-react';
+
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import OtUtilizationChart from '@/components/reports/ot-utilization-chart';
@@ -9,12 +14,20 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { OperationSchedule, Doctor, OperatingRoom } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 export default function ReportsPage() {
   const firestore = useFirestore();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -29),
+    to: new Date(),
+  });
 
   const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operation_schedules'), [firestore]);
-  const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesCollection);
+  const { data: allSurgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesCollection);
 
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
   const { data: doctors, isLoading: isLoadingDoctors } = useCollection<Doctor>(doctorsCollection);
@@ -23,13 +36,63 @@ export default function ReportsPage() {
   const { data: operatingRooms, isLoading: isLoadingOts } = useCollection<OperatingRoom>(otsCollection);
 
   const isLoading = isLoadingSurgeries || isLoadingDoctors || isLoadingOts;
+  
+  const filteredSurgeries = useMemo(() => {
+    if (!allSurgeries || !date?.from) return [];
+    
+    // Set time to the very start of the from date and very end of the to date
+    const fromDate = new Date(date.from.setHours(0, 0, 0, 0));
+    const toDate = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : fromDate;
+
+    return allSurgeries.filter(surgery => {
+      const surgeryDate = new Date(surgery.date);
+      return surgeryDate >= fromDate && surgeryDate <= toDate;
+    });
+  }, [allSurgeries, date]);
 
   return (
     <>
       <PageHeader
         title="Reporting & Analytics"
         description="Analyze OT activity, resource utilization, and efficiency with real-time data."
-      />
+      >
+        <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "w-[300px] justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date?.from ? (
+                  date.to ? (
+                    <>
+                      {format(date.from, "LLL dd, y")} -{" "}
+                      {format(date.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(date.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+      </PageHeader>
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -37,7 +100,7 @@ export default function ReportsPage() {
             <CardDescription>Number of surgeries performed in each operating theater.</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-[350px] w-full" /> : <OtUtilizationChart surgeries={surgeries || []} operatingRooms={operatingRooms || []} />}
+            {isLoading ? <Skeleton className="h-[350px] w-full" /> : <OtUtilizationChart surgeries={filteredSurgeries} operatingRooms={operatingRooms || []} />}
           </CardContent>
         </Card>
         <Card>
@@ -46,7 +109,7 @@ export default function ReportsPage() {
             <CardDescription>Distribution of surgeries across different medical specializations.</CardDescription>
           </CardHeader>
           <CardContent>
-             {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SurgeriesByTypeChart surgeries={surgeries || []} doctors={doctors || []} />}
+             {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SurgeriesByTypeChart surgeries={filteredSurgeries} doctors={doctors || []} />}
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
@@ -55,7 +118,7 @@ export default function ReportsPage() {
             <CardDescription>Total number of surgeries assigned to each doctor.</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SurgeriesPerDoctorChart surgeries={surgeries || []} doctors={doctors || []} />}
+            {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SurgeriesPerDoctorChart surgeries={filteredSurgeries} doctors={doctors || []} />}
           </CardContent>
         </Card>
       </div>
