@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Activity, CheckCircle, Clock, Users, Hospital } from 'lucide-react';
+import { Activity, CheckCircle, Clock, Users, Hospital, Edit } from 'lucide-react';
 import { collection, query, where } from 'firebase/firestore';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { ScheduleDetails } from '@/components/schedule/schedule-details';
+import { ScheduleForm } from '@/components/schedule/schedule-form';
+import { Button } from '@/components/ui/button';
 
 /**
  * Renders the main dashboard for the 'admin' role.
@@ -43,6 +45,7 @@ function getStatusBadgeVariant(status: OperationSchedule['status']) {
 export default function AdminDashboardPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedSurgery, setSelectedSurgery] = useState<OperationSchedule | null>(null);
 
   const firestore = useFirestore();
@@ -95,6 +98,12 @@ export default function AdminDashboardPage() {
   const handleViewDetails = (surgery: OperationSchedule) => {
     setSelectedSurgery(surgery);
     setIsDetailsOpen(true);
+  };
+  
+  const handleEdit = (surgery: OperationSchedule) => {
+    setSelectedSurgery(surgery);
+    setIsDetailsOpen(false); // Close details sheet
+    setIsFormOpen(true); // Open form dialog
   };
 
 
@@ -204,11 +213,21 @@ export default function AdminDashboardPage() {
       </div>
 
       {selectedSurgery && (
-        <ScheduleDetails
-            isOpen={isDetailsOpen}
-            setIsOpen={setIsDetailsOpen}
-            surgery={selectedSurgery}
-        />
+        <>
+            <ScheduleDetails
+                isOpen={isDetailsOpen}
+                setIsOpen={setIsDetailsOpen}
+                surgery={selectedSurgery}
+                onEdit={handleEdit}
+            />
+            <ScheduleForm
+                isOpen={isFormOpen}
+                setIsOpen={setIsFormOpen}
+                surgery={selectedSurgery}
+                doctors={doctors || []}
+                patients={patients || []}
+            />
+        </>
       )}
     </>
   );

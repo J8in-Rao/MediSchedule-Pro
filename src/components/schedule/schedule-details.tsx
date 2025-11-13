@@ -6,15 +6,19 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetFooter,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { OperationSchedule } from '@/lib/types';
 import { Separator } from '../ui/separator';
+import { Button } from '../ui/button';
+import { Edit } from 'lucide-react';
 
 type ScheduleDetailsProps = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   surgery: OperationSchedule & { room?: string };
+  onEdit?: (surgery: OperationSchedule) => void;
 };
 
 const DetailItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
@@ -25,19 +29,19 @@ const DetailItem = ({ label, value }: { label: string; value: React.ReactNode })
 );
 
 
-export function ScheduleDetails({ isOpen, setIsOpen, surgery }: ScheduleDetailsProps) {
+export function ScheduleDetails({ isOpen, setIsOpen, surgery, onEdit }: ScheduleDetailsProps) {
   if (!surgery) return null;
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
+      <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto flex flex-col">
         <SheetHeader>
           <SheetTitle>Operation Details</SheetTitle>
           <SheetDescription>
             Detailed view of the scheduled operation.
           </SheetDescription>
         </SheetHeader>
-        <div className="space-y-6 py-6">
+        <div className="space-y-6 py-6 flex-grow">
             <div className='space-y-2'>
                 <h3 className="text-lg font-semibold">{surgery.procedure}</h3>
                  <div className="flex items-center gap-2">
@@ -70,6 +74,13 @@ export function ScheduleDetails({ isOpen, setIsOpen, surgery }: ScheduleDetailsP
             </div>
             
         </div>
+         {onEdit && (
+            <SheetFooter className='pt-4'>
+                <Button onClick={() => onEdit(surgery)}>
+                    <Edit className="mr-2 h-4 w-4" /> Edit Schedule
+                </Button>
+            </SheetFooter>
+        )}
       </SheetContent>
     </Sheet>
   );

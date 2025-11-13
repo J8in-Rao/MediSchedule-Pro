@@ -178,6 +178,18 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
       const surgeryRef = doc(firestore, "operation_schedules", surgery.id);
       setDocumentNonBlocking(surgeryRef, { ...surgeryData, updated_at: serverTimestamp() }, { merge: true });
        toast({ title: "Operation Updated", description: `The operation "${values.procedure}" has been successfully updated.`});
+
+       // Send notification message to the doctor
+       const message = `Notice: The schedule for your surgery "${values.procedure}" on ${surgeryData.date} has been updated by an admin.`;
+       addDocumentNonBlocking(collection(firestore, 'messages'), {
+         sender_id: 'admin-group',
+         receiver_id: values.doctor_id,
+         text: message,
+         timestamp: serverTimestamp(),
+         read: false,
+         type: 'system',
+       });
+
     } else {
       addDocumentNonBlocking(collection(firestore, 'operation_schedules'), {
         ...surgeryData,
