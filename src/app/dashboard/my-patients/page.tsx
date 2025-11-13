@@ -12,8 +12,9 @@ import {
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import type { Patient, OperationSchedule } from '@/lib/types';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 export default function MyPatientsPage() {
   const { user } = useUser();
@@ -26,35 +27,48 @@ export default function MyPatientsPage() {
   }, [firestore, user]);
   const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
 
-  // 2. Extract unique patient IDs from those operations
-  const patientIds = useMemo(() => {
-    if (!surgeries) return [];
-    const ids = new Set(surgeries.map(s => s.patient_id));
-    return Array.from(ids);
-  }, [surgeries]);
-  
-  // 3. Get all patients
+  // 2. Get all patients
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   const { data: allPatients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
 
-  // 4. Filter all patients to get only the ones assigned to the doctor
-  const assignedPatients = useMemo(() => {
-    if (!allPatients || patientIds.length === 0) return [];
-    return allPatients.filter(p => patientIds.includes(p.id));
-  }, [allPatients, patientIds]);
+  // 3. Separate patients into current and past
+  const { currentPatients, pastPatients } = useMemo(() => {
+    if (!surgeries || !allPatients) return { currentPatients: [], pastPatients: [] };
+
+    const upcomingPatientIds = new Set<string>();
+    const pastPatientIds = new Set<string>();
+
+    surgeries.forEach(s => {
+      const isUpcoming = new Date(s.date) >= new Date() && s.status === 'scheduled';
+      if (isUpcoming) {
+        upcomingPatientIds.add(s.patient_id);
+      } else {
+        pastPatientIds.add(s.patient_id);
+      }
+    });
+
+    const current = allPatients.filter(p => upcomingPatientIds.has(p.id));
+    // Past patients are those who had a past operation but are not in the upcoming list
+    const past = allPatients.filter(p => pastPatientIds.has(p.id) && !upcomingPatientIds.has(p.id));
+
+    return { currentPatients: current, pastPatients: past };
+  }, [surgeries, allPatients]);
 
   const isLoading = isLoadingSurgeries || isLoadingPatients;
 
-  return (
-    <>
-      <PageHeader
-        title="My Patients"
-        description="A list of all patients assigned to you for operations."
-      />
-      <Card>
+  const handlePatientClick = (patient: Patient) => {
+    // Placeholder for future patient detail view implementation
+    toast({
+        title: "Patient Details",
+        description: `Showing details for ${patient.name}. (Full page coming soon!)`
+    });
+  }
+
+  const renderPatientTable = (patients: Patient[], title: string, description: string) => (
+     <Card>
         <CardHeader>
-          <CardTitle>Assigned Patients List</CardTitle>
-          <CardDescription>Patients you are scheduled to operate on.</CardDescription>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -70,8 +84,8 @@ export default function MyPatientsPage() {
             </TableHeader>
             <TableBody>
               {isLoading && <TableRow><TableCell colSpan={6} className="text-center">Loading patients...</TableCell></TableRow>}
-              {!isLoading && assignedPatients.map(patient => (
-                <TableRow key={patient.id}>
+              {!isLoading && patients.map(patient => (
+                <TableRow key={patient.id} onClick={() => handlePatientClick(patient)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{patient.name}</TableCell>
                   <TableCell>{patient.age}</TableCell>
                   <TableCell>{patient.gender}</TableCell>
@@ -80,10 +94,10 @@ export default function MyPatientsPage() {
                   <TableCell>{format(new Date(patient.admitted_on), 'PPP')}</TableCell>
                 </TableRow>
               ))}
-              {!isLoading && assignedPatients.length === 0 && (
+              {!isLoading && patients.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">
-                    No patients are currently assigned to you for any operation.
+                    No patients found in this category.
                   </TableCell>
                 </TableRow>
               )}
@@ -91,6 +105,16 @@ export default function MyPatientsPage() {
           </Table>
         </CardContent>
       </Card>
-    </>
+  )
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="My Patients"
+        description="A list of all patients assigned to you for operations."
+      />
+      {renderPatientTable(currentPatients, "Current Patients", "Patients with upcoming scheduled operations.")}
+      {renderPatientTable(pastPatients, "Past Patients", "Patients you have previously operated on.")}
+    </div>
   );
 }

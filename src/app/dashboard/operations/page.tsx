@@ -22,6 +22,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState, useMemo } from 'react';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { toast } from '@/hooks/use-toast';
+import { ScheduleDetails } from '@/components/schedule/schedule-details';
+
+type ProcessedSurgery = OperationSchedule & { patientName: string; doctorName: string; time: string; room: string; };
 
 function getStatusBadgeVariant(status: OperationSchedule['status']) {
   switch (status) {
@@ -85,6 +88,9 @@ export default function DoctorOperationsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedSurgery, setSelectedSurgery] = useState<ProcessedSurgery | null>(null);
+
   const surgeriesQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(collection(firestore, 'operation_schedules'), where('doctor_id', '==', user.uid));
@@ -98,20 +104,31 @@ export default function DoctorOperationsPage() {
   const otsCollection = useMemoFirebase(() => collection(firestore, 'ot_rooms'), [firestore]);
   const { data: operatingRooms, isLoading: isLoadingOts } = useCollection<OperatingRoom>(otsCollection);
 
-  const patientMap = useMemo(() => {
-    if (!patients) return new Map();
-    return new Map(patients.map(p => [p.id, p.name]));
-  }, [patients]);
+  const processedData: ProcessedSurgery[] = useMemo(() => {
+    if (!surgeries || !patients || !operatingRooms) return [];
+    const patientMap = new Map(patients.map(p => [p.id, p.name]));
+    const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
+    const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
+
+    return surgeries.map(surgery => ({
+      ...surgery,
+      patientName: patientMap.get(surgery.patient_id) || 'Unknown Patient',
+      doctorName: doctorMap.get(surgery.doctor_id) || 'Unknown Doctor',
+      time: `${surgery.start_time} - ${surgery.end_time}`,
+      room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`
+    }));
+  }, [surgeries, patients, operatingRooms]);
+
+
+  const upcomingSurgeries = processedData?.filter(s => new Date(s.date) >= new Date() && s.status === 'scheduled');
+  const pastSurgeries = processedData?.filter(s => new Date(s.date) < new Date() || s.status !== 'scheduled');
   
-  const roomMap = useMemo(() => {
-    if (!operatingRooms) return new Map();
-    return new Map(operatingRooms.map(r => [r.id, r.room_number]));
-  }, [operatingRooms]);
-
-
-  const upcomingSurgeries = surgeries?.filter(s => new Date(s.date) >= new Date() && s.status === 'scheduled');
-  const pastSurgeries = surgeries?.filter(s => new Date(s.date) < new Date() || s.status !== 'scheduled');
   const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingOts;
+  
+  const handleViewDetails = (surgery: ProcessedSurgery) => {
+    setSelectedSurgery(surgery);
+    setIsDetailsOpen(true);
+  };
 
   return (
     <div className="grid gap-6">
@@ -124,11 +141,11 @@ export default function DoctorOperationsPage() {
             <p className="text-center text-muted-foreground py-8">Loading your operations...</p>
           ) : upcomingSurgeries && upcomingSurgeries.length > 0 ? (
             upcomingSurgeries.map((surgery) => (
-              <div key={surgery.id} className="p-4 rounded-lg border bg-card">
+              <div key={surgery.id} className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => handleViewDetails(surgery)}>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="flex-1 space-y-1">
                     <p className="font-semibold text-lg">{surgery.procedure}</p>
-                    <p className="text-sm text-muted-foreground">Patient: {patientMap.get(surgery.patient_id)}</p>
+                    <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
                     <p className="text-sm font-semibold">{format(new Date(surgery.date), 'MMMM d, yyyy')}</p>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -136,7 +153,7 @@ export default function DoctorOperationsPage() {
                       <Clock className="w-4 h-4" />
                       <span>{surgery.start_time} - {surgery.end_time}</span>
                     </div>
-                    <div className="font-medium">OT-{roomMap.get(surgery.ot_id)}</div>
+                    <div className="font-medium">{surgery.room}</div>
                     <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                   </div>
                 </div>
@@ -156,20 +173,24 @@ export default function DoctorOperationsPage() {
             <p className="text-center text-muted-foreground py-8">Loading past operations...</p>
           ) : pastSurgeries && pastSurgeries.length > 0 ? (
             pastSurgeries.map((surgery) => (
-              <div key={surgery.id} className="p-4 rounded-lg border bg-card opacity-70">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="flex-1 space-y-1">
+              <div key={surgery.id} className="p-4 rounded-lg border bg-card opacity-70 hover:opacity-100 transition-opacity">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" >
+                  <div className="flex-1 space-y-1 cursor-pointer" onClick={() => handleViewDetails(surgery)}>
                     <p className="font-semibold text-lg">{surgery.procedure}</p>
-                    <p className="text-sm text-muted-foreground">Patient: {patientMap.get(surgery.patient_id)}</p>
+                    <p className="text-sm text-muted-foreground">Patient: {surgery.patientName}</p>
                     <p className="text-sm">{format(new Date(surgery.date), 'MMMM d, yyyy')}</p>
                     {surgery.remarks && <p className="text-xs italic text-muted-foreground pt-2">Your Remarks: "{surgery.remarks}"</p>}
                   </div>
                    <div className="flex flex-col items-end gap-2">
                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="font-medium">OT-{roomMap.get(surgery.ot_id)}</div>
+                        <div className="font-medium">{surgery.room}</div>
                         <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                     </div>
-                    {surgery.status !== 'completed' && <RemarksDialog surgery={surgery} patientName={patientMap.get(surgery.patient_id) || 'Unknown'} />}
+                    {surgery.status !== 'completed' && (
+                        <div onClick={e => e.stopPropagation()}>
+                            <RemarksDialog surgery={surgery} patientName={surgery.patientName || 'Unknown'} />
+                        </div>
+                    )}
                    </div>
                 </div>
               </div>
@@ -179,6 +200,13 @@ export default function DoctorOperationsPage() {
           )}
         </CardContent>
       </Card>
+       {selectedSurgery && (
+        <ScheduleDetails
+            isOpen={isDetailsOpen}
+            setIsOpen={setIsDetailsOpen}
+            surgery={selectedSurgery}
+        />
+      )}
     </div>
   );
 }
