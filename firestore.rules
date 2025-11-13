@@ -34,7 +34,7 @@ service cloud.firestore {
 
     // USERS
     match /users/{userId} {
-      allow read: if isSignedIn() && (isAdmin() || isUser(userId));
+      allow read: if isSignedIn();
       allow update: if isUser(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'id', 'email', 'created_at']);
       allow create: if isAdmin(); // Only admins can create users directly. Sign-up is separate.
     }
@@ -64,16 +64,20 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // MESSAGES
+    // MESSAGES (for doctor/admin chat)
     match /messages/{messageId} {
-      allow read, write: if isSignedIn() && (isAdmin() || resource.data.sender_id == request.auth.uid || resource.data.receiver_id == request.auth.uid);
-      allow create: if isSignedIn();
+      // An admin can read any message. A doctor can read messages they sent or received.
+      allow read: if isAdmin() || (isDoctor() && (resource.data.sender_id == request.auth.uid || resource.data.receiver_id == request.auth.uid));
+      // A doctor can create a message. An admin can create a message (reply).
+      allow create: if isDoctor() || isAdmin();
+      // Users shouldn't be able to edit messages.
+      allow update, delete: if false;
     }
     
-     // Contact Messages from Support Form
+     // Contact Messages from public Support Form
     match /contact_messages/{messageId} {
       allow read, write: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if true; // Anyone can send a support message
     }
 
 
