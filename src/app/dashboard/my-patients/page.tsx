@@ -36,7 +36,7 @@ export default function MyPatientsPage() {
 
   // 3. Get all patients
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
-  const { data: allPatients, isLoading: isLoadingPatients } = useCollection<Patient>(allPatients);
+  const { data: allPatients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
 
   // 4. Combine patient lists and separate them into current and past
   const { currentPatients, pastPatients } = useMemo(() => {
