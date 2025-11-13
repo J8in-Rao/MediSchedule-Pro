@@ -119,14 +119,18 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
             drugs_used: request.required_drugs || "",
             remarks: request.additional_notes || "",
             status: 'scheduled',
+            report_url: request.uploads_url || '',
         });
     } else if (surgery) {
         form.reset({
             ...surgery,
             date: new Date(surgery.date),
-            nurses: surgery.nurses?.join(', '),
-            drugs_used: surgery.drugs_used?.join(', '),
-            instruments: surgery.instruments?.join(', '),
+            nurses: surgery.nurses?.join(', ') || '',
+            drugs_used: surgery.drugs_used?.join(', ') || '',
+            instruments: surgery.instruments?.join(', ') || '',
+            assistant_surgeon: surgery.assistant_surgeon || '',
+            remarks: surgery.remarks || '',
+            report_url: surgery.report_url || '',
         });
     } else {
         form.reset({
@@ -156,7 +160,6 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
         return;
     }
     
-    // Denormalize data
     const patientName = patients.find(p => p.id === values.patient_id)?.name || 'Unknown Patient';
     const doctorName = doctors.find(d => d.id === values.doctor_id)?.name || 'Unknown Doctor';
 
@@ -169,9 +172,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
       nurses: values.nurses?.split(',').map(n => n.trim()).filter(n => n) || [],
       drugs_used: values.drugs_used?.split(',').map(d => d.trim()).filter(d => d) || [],
       instruments: values.instruments?.split(',').map(i => i.trim()).filter(i => i) || [],
-      report_url: values.report_url || null,
-      assistant_surgeon: values.assistant_surgeon || null,
-      remarks: values.remarks || null,
+      report_url: values.report_url || '',
+      assistant_surgeon: values.assistant_surgeon || '',
+      remarks: values.remarks || '',
     };
 
     if (surgery) {
@@ -179,7 +182,6 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
       setDocumentNonBlocking(surgeryRef, { ...surgeryData, updated_at: serverTimestamp() }, { merge: true });
        toast({ title: "Operation Updated", description: `The operation "${values.procedure}" has been successfully updated.`});
 
-       // Send notification message to the doctor
        const message = `Notice: The schedule for your surgery "${values.procedure}" on ${surgeryData.date} has been updated by an admin.`;
        addDocumentNonBlocking(collection(firestore, 'messages'), {
          sender_id: 'admin-group',
@@ -200,7 +202,6 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
       toast({ title: "Operation Scheduled", description: `The operation "${values.procedure}" has been successfully scheduled.`});
     }
 
-    // If this schedule was created from a request, update the request status
     if (request) {
       const requestRef = doc(firestore, "surgery_requests", request.id);
       setDocumentNonBlocking(requestRef, { status: "Scheduled" }, { merge: true });
@@ -537,5 +538,3 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
     </Dialog>
   );
 }
-
-    
