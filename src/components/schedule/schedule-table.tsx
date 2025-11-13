@@ -32,20 +32,31 @@ import {
 } from "@/components/ui/table";
 import { PlusCircle, ChevronDown } from "lucide-react";
 import { getColumns } from "./schedule-columns";
-import { Doctor, Patient, OperationSchedule } from "@/lib/types";
+import { Doctor, Patient, OperationSchedule, OperatingRoom } from "@/lib/types";
 import { ScheduleForm } from "./schedule-form";
 import { ScheduleDetails } from "./schedule-details";
+import { useToast } from "@/hooks/use-toast";
 
 interface ScheduleTableProps {
   data: OperationSchedule[];
   doctors: Doctor[];
   patients: Patient[];
+  operatingRooms: OperatingRoom[];
 }
 
-export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
+const MAX_VISIBLE_COLUMNS = 7;
+
+export function ScheduleTable({ data, doctors, patients, operatingRooms }: ScheduleTableProps) {
+  const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [globalFilter, setGlobalFilter] = React.useState('');
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
+    // Hide these by default
+    anesthesiologist: false,
+    anesthesia_type: false,
+    assistant_surgeon: false,
+  });
   const [rowSelection, setRowSelection] = React.useState({});
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
@@ -56,19 +67,21 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
     setIsDetailsOpen(true);
   };
   
-  const columns = React.useMemo(() => getColumns({ onViewDetails: handleViewDetails }), [doctors, patients]);
+  const columns = React.useMemo(() => getColumns({ onViewDetails: handleViewDetails }), []);
 
   const processedData = React.useMemo(() => {
     const patientMap = new Map(patients.map(p => [p.id, p.name]));
     const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
+    const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
 
     return data.map(surgery => ({
       ...surgery,
       patientName: patientMap.get(surgery.patient_id) || 'Unknown Patient',
       doctorName: doctorMap.get(surgery.doctor_id) || 'Unknown Doctor',
       time: `${surgery.start_time} - ${surgery.end_time}`,
+      room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`
     }));
-  }, [data, patients, doctors]);
+  }, [data, patients, doctors, operatingRooms]);
 
 
   const table = useReactTable({
@@ -82,22 +95,38 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter,
     },
   });
+
+  const handleColumnVisibilityChange = (columnId: string, isVisible: boolean) => {
+    const visibleColumnCount = Object.values(table.getState().columnVisibility).filter(v => v).length;
+
+    if (isVisible && visibleColumnCount >= MAX_VISIBLE_COLUMNS) {
+      toast({
+        variant: 'destructive',
+        title: 'Column Limit Reached',
+        description: `You can only show a maximum of ${MAX_VISIBLE_COLUMNS} columns at a time.`,
+      });
+      return;
+    }
+    table.getColumn(columnId)?.toggleVisibility(isVisible);
+  };
 
   return (
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
         <Input
-          placeholder="Filter by procedure..."
-          value={(table.getColumn("procedure")?.getFilterValue() as string) ?? ""}
+          placeholder="Search all columns..."
+          value={globalFilter ?? ''}
           onChange={(event) =>
-            table.getColumn("procedure")?.setFilterValue(event.target.value)
+            setGlobalFilter(event.target.value)
           }
           className="max-w-sm"
         />
@@ -110,7 +139,7 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
           <DropdownMenuContent align="end">
             {table
               .getAllColumns()
-              .filter((column) => column.getCanHide())
+              .filter((column) => column.getCanHide() && column.id !== 'actions' && column.id !== 'select')
               .map((column) => {
                 return (
                   <DropdownMenuCheckboxItem
@@ -118,10 +147,10 @@ export function ScheduleTable({ data, doctors, patients }: ScheduleTableProps) {
                     className="capitalize"
                     checked={column.getIsVisible()}
                     onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
+                      handleColumnVisibilityChange(column.id, !!value)
                     }
                   >
-                    {column.id}
+                    {column.id.replace(/_/g, ' ')}
                   </DropdownMenuCheckboxItem>
                 );
               })}

@@ -67,9 +67,8 @@ export const getColumns = ({ onViewDetails }: GetColumnsProps): ColumnDef<Operat
     header: "Time",
   },
   {
-    accessorKey: "ot_id",
+    accessorKey: "room",
     header: "Room",
-    cell: ({ row }) => `OT-${row.original.ot_id}`,
   },
   {
     accessorKey: "status",
@@ -78,6 +77,18 @@ export const getColumns = ({ onViewDetails }: GetColumnsProps): ColumnDef<Operat
       const status = row.getValue("status") as OperationSchedule['status'];
       return <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>;
     },
+  },
+    {
+    accessorKey: "anesthesiologist",
+    header: "Anesthesiologist",
+  },
+  {
+    accessorKey: "anesthesia_type",
+    header: "Anesthesia",
+  },
+  {
+    accessorKey: "assistant_surgeon",
+    header: "Assistant",
   },
   {
     id: "actions",
