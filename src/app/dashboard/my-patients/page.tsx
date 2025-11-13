@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import type { Patient, OperationSchedule } from '@/lib/types';
+import type { Patient, OperationSchedule, SurgeryRequest } from '@/lib/types';
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
@@ -27,34 +27,48 @@ export default function MyPatientsPage() {
   }, [firestore, user]);
   const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
 
-  // 2. Get all patients
+  // 2. Get all surgery requests for the current doctor
+  const requestsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'surgery_requests'), where('requesting_doctor_id', '==', user.uid));
+  }, [firestore, user]);
+  const { data: requests, isLoading: isLoadingRequests } = useCollection<SurgeryRequest>(requestsQuery);
+
+  // 3. Get all patients
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
-  const { data: allPatients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
+  const { data: allPatients, isLoading: isLoadingPatients } = useCollection<Patient>(allPatients);
 
-  // 3. Separate patients into current and past
+  // 4. Combine patient lists and separate them into current and past
   const { currentPatients, pastPatients } = useMemo(() => {
-    if (!surgeries || !allPatients) return { currentPatients: [], pastPatients: [] };
+    if (!surgeries || !allPatients || !requests) return { currentPatients: [], pastPatients: [] };
 
-    const upcomingPatientIds = new Set<string>();
-    const pastPatientIds = new Set<string>();
+    const allAssociatedPatientIds = new Set<string>();
+    surgeries.forEach(s => allAssociatedPatientIds.add(s.patient_id));
+    requests.forEach(r => allAssociatedPatientIds.add(r.patient_id));
 
+    const upcomingOrPendingPatientIds = new Set<string>();
+    // Patients with upcoming scheduled operations
     surgeries.forEach(s => {
       const isUpcoming = new Date(s.date) >= new Date() && s.status === 'scheduled';
       if (isUpcoming) {
-        upcomingPatientIds.add(s.patient_id);
-      } else {
-        pastPatientIds.add(s.patient_id);
+        upcomingOrPendingPatientIds.add(s.patient_id);
       }
     });
+    // Patients with pending or approved (but not yet scheduled) requests
+    requests.forEach(r => {
+        if (r.status === 'Pending' || r.status === 'Approved') {
+            upcomingOrPendingPatientIds.add(r.patient_id);
+        }
+    });
 
-    const current = allPatients.filter(p => upcomingPatientIds.has(p.id));
-    // Past patients are those who had a past operation but are not in the upcoming list
-    const past = allPatients.filter(p => pastPatientIds.has(p.id) && !upcomingPatientIds.has(p.id));
+    const current = allPatients.filter(p => upcomingOrPendingPatientIds.has(p.id));
+    // Past patients are those associated with the doctor but not in the upcoming/pending list
+    const past = allPatients.filter(p => allAssociatedPatientIds.has(p.id) && !upcomingOrPendingPatientIds.has(p.id));
 
     return { currentPatients: current, pastPatients: past };
-  }, [surgeries, allPatients]);
+  }, [surgeries, requests, allPatients]);
 
-  const isLoading = isLoadingSurgeries || isLoadingPatients;
+  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingRequests;
 
   const handlePatientClick = (patient: Patient) => {
     // Placeholder for future patient detail view implementation
@@ -111,10 +125,8 @@ export default function MyPatientsPage() {
         title="My Patients"
         description="A list of all patients assigned to you for operations."
       />
-      {renderPatientTable(currentPatients, "Current Patients", "Patients with upcoming scheduled operations.")}
+      {renderPatientTable(currentPatients, "Current Patients", "Patients with upcoming operations or pending requests.")}
       {renderPatientTable(pastPatients, "Past Patients", "Patients you have previously operated on.")}
     </div>
   );
 }
-
-    
