@@ -38,9 +38,23 @@ const getStatusBadgeVariant = (status: SurgeryRequest['status']) => {
     }
 };
 
+// Helper to safely convert Firestore Timestamps
+const toDate = (timestamp: any): Date | null => {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
+    return new Date(timestamp.seconds * 1000);
+  }
+  // Fallback for string dates, though Firestore Timestamps are preferred
+  const d = new Date(timestamp);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 
 export function RequestDetails({ isOpen, setIsOpen, request }: RequestDetailsProps) {
   if (!request) return null;
+
+  const createdAtDate = toDate(request.created_at);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -58,7 +72,9 @@ export function RequestDetails({ isOpen, setIsOpen, request }: RequestDetailsPro
                     <Badge variant={getStatusBadgeVariant(request.status)}>
                         {request.status}
                     </Badge>
-                     <span className="text-sm text-muted-foreground">Requested on {format(new Date(request.created_at as Date), 'PPP')}</span>
+                     <span className="text-sm text-muted-foreground">
+                        {createdAtDate ? `Requested on ${format(createdAtDate, 'PPP')}` : 'Request date unavailable'}
+                     </span>
                 </div>
             </div>
           
