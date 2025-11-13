@@ -3,7 +3,7 @@
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
-import type { OperationSchedule, Patient, OperatingRoom } from '@/lib/types';
+import type { OperationSchedule, Patient, OperatingRoom, Doctor } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
@@ -101,11 +101,14 @@ export default function DoctorOperationsPage() {
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
   
+  const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
+  const { data: doctors, isLoading: isLoadingDoctors } = useCollection<Doctor>(doctorsCollection);
+
   const otsCollection = useMemoFirebase(() => collection(firestore, 'ot_rooms'), [firestore]);
   const { data: operatingRooms, isLoading: isLoadingOts } = useCollection<OperatingRoom>(otsCollection);
 
   const processedData: ProcessedSurgery[] = useMemo(() => {
-    if (!surgeries || !patients || !operatingRooms) return [];
+    if (!surgeries || !patients || !operatingRooms || !doctors) return [];
     const patientMap = new Map(patients.map(p => [p.id, p.name]));
     const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
     const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
@@ -117,13 +120,13 @@ export default function DoctorOperationsPage() {
       time: `${surgery.start_time} - ${surgery.end_time}`,
       room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`
     }));
-  }, [surgeries, patients, operatingRooms]);
+  }, [surgeries, patients, operatingRooms, doctors]);
 
 
   const upcomingSurgeries = processedData?.filter(s => new Date(s.date) >= new Date() && s.status === 'scheduled');
   const pastSurgeries = processedData?.filter(s => new Date(s.date) < new Date() || s.status !== 'scheduled');
   
-  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingOts;
+  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingOts || isLoadingDoctors;
   
   const handleViewDetails = (surgery: ProcessedSurgery) => {
     setSelectedSurgery(surgery);
