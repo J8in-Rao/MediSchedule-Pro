@@ -23,12 +23,20 @@ export default function AlertsPage() {
     return query(
       collection(firestore, 'messages'),
       where('receiver_id', '==', user.uid),
-      where('type', '==', 'system'),
-      orderBy('timestamp', 'desc')
+      where('type', '==', 'system')
+      // orderBy('timestamp', 'desc') // Temporarily removed to prevent permission error
     );
   }, [firestore, user]);
 
   const { data: alerts, isLoading } = useCollection<SupportMessage>(alertsQuery);
+  
+  // Client-side sorting as a temporary measure
+  const sortedAlerts = alerts?.sort((a, b) => {
+      const timeA = (a.timestamp as any)?.seconds || 0;
+      const timeB = (b.timestamp as any)?.seconds || 0;
+      return timeB - timeA;
+  });
+
 
   const handleMarkAsRead = (alertId: string) => {
     const alertRef = doc(firestore, 'messages', alertId);
@@ -63,7 +71,7 @@ export default function AlertsPage() {
           <ScrollArea className="h-full">
              <div className="space-y-0">
                 {isLoading && <p className="p-6">Loading alerts...</p>}
-                {alerts?.map(alert => (
+                {sortedAlerts?.map(alert => (
                     <div key={alert.id} className={cn("flex items-start gap-4 p-6 border-b", alert.read ? 'opacity-60' : 'bg-muted/50')}>
                         <div className="flex-shrink-0 pt-1">
                              <Bell className="h-5 w-5 text-primary" />
