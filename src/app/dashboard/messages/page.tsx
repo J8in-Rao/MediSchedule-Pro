@@ -144,37 +144,35 @@ export default function MessagesPage() {
             </CardDescription>
           </CardHeader>
             {selectedUserId ? (
-             <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                <ScrollArea className="flex-grow px-6">
-                   <div className="space-y-4">
-                    {selectedUserMessages.map(msg => {
-                        const senderInfo = userMap.get(msg.sender_id);
-                        const isSentByAdmin = msg.sender_id === 'admin-group';
-                        
-                        return (
-                        <div key={msg.id} className={cn("flex items-end gap-2", isSentByAdmin ? 'justify-end' : 'justify-start')}>
-                            {!isSentByAdmin && (
-                            <Avatar className="h-8 w-8">
-                                <AvatarFallback>{senderInfo?.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            )}
-                            <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isSentByAdmin ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                            <p className="font-bold text-sm">{senderInfo?.name}</p>
-                            <p className="text-sm">{msg.text}</p>
-                            <p className="text-xs text-right opacity-70 mt-1">
-                                {msg.timestamp && formatDistanceToNow(new Date((msg.timestamp as any).seconds * 1000), { addSuffix: true })}
-                            </p>
-                            </div>
-                            {isSentByAdmin && (
-                            <Avatar className="h-8 w-8">
-                                <AvatarFallback>A</AvatarFallback>
-                            </Avatar>
-                            )}
-                        </div>
-                        )
-                    })}
-                    </div>
-                </ScrollArea>
+             <div className="flex-1 flex flex-col justify-between">
+                <CardContent className="space-y-4">
+                  {selectedUserMessages.map(msg => {
+                      const senderInfo = userMap.get(msg.sender_id);
+                      const isSentByAdmin = msg.sender_id === 'admin-group';
+                      
+                      return (
+                      <div key={msg.id} className={cn("flex items-end gap-2", isSentByAdmin ? 'justify-end' : 'justify-start')}>
+                          {!isSentByAdmin && (
+                          <Avatar className="h-8 w-8">
+                              <AvatarFallback>{senderInfo?.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          )}
+                          <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isSentByAdmin ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                          <p className="font-bold text-sm">{senderInfo?.name}</p>
+                          <p className="text-sm">{msg.text}</p>
+                          <p className="text-xs text-right opacity-70 mt-1">
+                              {msg.timestamp && formatDistanceToNow(new Date((msg.timestamp as any).seconds * 1000), { addSuffix: true })}
+                          </p>
+                          </div>
+                          {isSentByAdmin && (
+                          <Avatar className="h-8 w-8">
+                              <AvatarFallback>A</AvatarFallback>
+                          </Avatar>
+                          )}
+                      </div>
+                      )
+                  })}
+                </CardContent>
                 <form
                     className="flex w-full items-center space-x-2 p-6 pt-4 border-t"
                     onSubmit={handleSubmit}
