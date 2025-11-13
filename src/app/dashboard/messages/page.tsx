@@ -143,10 +143,10 @@ export default function MessagesPage() {
                 {selectedUserId ? `Chat history with ${userMap.get(selectedUserId)?.name}`: 'Select a user from the left to view messages.'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-grow flex flex-col gap-4 overflow-hidden">
+          <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
              {selectedUserId ? (
               <>
-                <ScrollArea className="flex-grow pr-4">
+                <ScrollArea className="flex-1 pr-4">
                    <div className="space-y-4">
                     {selectedUserMessages.map(msg => {
                         const senderInfo = userMap.get(msg.sender_id);
