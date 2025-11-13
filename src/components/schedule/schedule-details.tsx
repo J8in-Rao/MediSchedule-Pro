@@ -20,7 +20,7 @@ type ScheduleDetailsProps = {
 const DetailItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div>
     <p className="text-sm font-medium text-muted-foreground">{label}</p>
-    <p className="text-base font-semibold">{value || 'N/A'}</p>
+    <div className="text-base font-semibold">{value || 'N/A'}</div>
   </div>
 );
 
@@ -65,7 +65,7 @@ export function ScheduleDetails({ isOpen, setIsOpen, surgery }: ScheduleDetailsP
                 <DetailItem label="Nurses" value={surgery.nurses?.join(', ')} />
                 <DetailItem label="Instruments" value={surgery.instruments?.join(', ')} />
                 <DetailItem label="Drugs / Materials" value={surgery.drugs_used?.join(', ')} />
-                <DetailItem label="Doctor's Remarks" value={<p className='italic text-sm font-normal'>"{surgery.remarks}"</p>} />
+                <DetailItem label="Doctor's Remarks" value={<span className='italic text-sm font-normal'>"{surgery.remarks}"</span>} />
                 <DetailItem label="Report URL" value={surgery.report_url ? <a href={surgery.report_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View Report</a> : 'N/A'} />
             </div>
             
