@@ -30,10 +30,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { getColumns } from "./schedule-columns";
 import { Doctor, Patient, OperationSchedule, OperatingRoom } from "@/lib/types";
-import { ScheduleForm } from "./schedule-form";
 import { ScheduleDetails } from "./schedule-details";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,25 +41,24 @@ interface ScheduleTableProps {
   doctors: Doctor[];
   patients: Patient[];
   operatingRooms: OperatingRoom[];
+  onAdd: () => void;
 }
 
 const MAX_VISIBLE_COLUMNS = 7;
 
 type ProcessedSurgery = OperationSchedule & { patientName: string; doctorName: string; time: string; room: string; };
 
-export function ScheduleTable({ data, doctors, patients, operatingRooms }: ScheduleTableProps) {
+export function ScheduleTable({ data, doctors, patients, operatingRooms, onAdd }: ScheduleTableProps) {
   const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
-    // Hide these by default
     anesthesiologist: false,
     anesthesia_type: false,
     assistant_surgeon: false,
   });
   const [rowSelection, setRowSelection] = React.useState({});
-  const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
   const [selectedSurgery, setSelectedSurgery] = React.useState<ProcessedSurgery | null>(null);
 
@@ -79,7 +77,6 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms }: Sched
   }, [data, patients, doctors, operatingRooms]);
 
   const handleViewDetails = (surgery: OperationSchedule) => {
-    // Find the fully processed surgery object to pass to the details view
     const fullSurgeryDetails = processedData.find(p => p.id === surgery.id);
     setSelectedSurgery(fullSurgeryDetails || null);
     setIsDetailsOpen(true);
@@ -160,9 +157,6 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms }: Sched
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Schedule Operation
-        </Button>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -238,12 +232,6 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms }: Sched
           </Button>
         </div>
       </div>
-       <ScheduleForm
-        isOpen={isFormOpen}
-        setIsOpen={setIsFormOpen}
-        doctors={doctors}
-        patients={patients}
-      />
        {selectedSurgery && (
         <ScheduleDetails
             isOpen={isDetailsOpen}
