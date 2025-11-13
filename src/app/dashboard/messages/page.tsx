@@ -146,7 +146,7 @@ export default function MessagesPage() {
           <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
              {selectedUserId ? (
               <>
-                <ScrollArea className="flex-1 pr-4">
+                <ScrollArea className="flex-grow pr-4 -mr-4">
                    <div className="space-y-4">
                     {selectedUserMessages.map(msg => {
                         const senderInfo = userMap.get(msg.sender_id);

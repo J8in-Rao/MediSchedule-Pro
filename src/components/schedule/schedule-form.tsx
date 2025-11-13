@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -102,38 +101,40 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
   });
 
   React.useEffect(() => {
-    if (request) {
-        form.reset({
-            procedure: request.procedure_name,
-            patient_id: request.patient_id,
-            doctor_id: request.requesting_doctor_id,
-            date: new Date(request.preferred_date),
-            start_time: "09:00",
-            end_time: "10:00",
-            ot_id: "",
-            anesthesia_type: request.anesthesia_type,
-            anesthesiologist: request.anesthesiologist || "",
-            assistant_surgeon: request.assistant_surgeon || "",
-            nurses: request.nurses_needed || "",
-            instruments: request.required_instruments || "",
-            drugs_used: request.required_drugs || "",
-            remarks: request.additional_notes || "",
-            status: 'scheduled',
-            report_url: request.uploads_url || '',
-        });
-    } else if (surgery) {
-        form.reset({
-            ...surgery,
-            date: new Date(surgery.date),
-            nurses: surgery.nurses?.join(', ') || '',
-            drugs_used: surgery.drugs_used?.join(', ') || '',
-            instruments: surgery.instruments?.join(', ') || '',
-            assistant_surgeon: surgery.assistant_surgeon || '',
-            remarks: surgery.remarks || '',
-            report_url: surgery.report_url || '',
-        });
-    } else {
-        form.reset({
+    const getInitialValues = () => {
+        if (request) {
+            return {
+                procedure: request.procedure_name || '',
+                patient_id: request.patient_id || '',
+                doctor_id: request.requesting_doctor_id || '',
+                date: new Date(request.preferred_date),
+                start_time: "09:00",
+                end_time: "10:00",
+                ot_id: "",
+                anesthesia_type: request.anesthesia_type || '',
+                anesthesiologist: request.anesthesiologist || '',
+                assistant_surgeon: request.assistant_surgeon || '',
+                nurses: request.nurses_needed || '',
+                instruments: request.required_instruments || '',
+                drugs_used: request.required_drugs || '',
+                remarks: request.additional_notes || '',
+                status: 'scheduled' as const,
+                report_url: request.uploads_url || '',
+            };
+        }
+        if (surgery) {
+            return {
+                ...surgery,
+                date: new Date(surgery.date),
+                nurses: surgery.nurses?.join(', ') || '',
+                drugs_used: surgery.drugs_used?.join(', ') || '',
+                instruments: surgery.instruments?.join(', ') || '',
+                assistant_surgeon: surgery.assistant_surgeon || '',
+                remarks: surgery.remarks || '',
+                report_url: surgery.report_url || '',
+            };
+        }
+        return {
             procedure: "",
             patient_id: "",
             doctor_id: "",
@@ -149,10 +150,14 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
             report_url: "",
             drugs_used: "",
             instruments: "",
-            status: 'scheduled',
-        });
+            status: 'scheduled' as const,
+        };
+    };
+
+    if (isOpen) {
+      form.reset(getInitialValues());
     }
-  }, [surgery, request, form]);
+  }, [surgery, request, form, isOpen]);
   
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
@@ -208,7 +213,6 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
     }
     
     setIsOpen(false);
-    form.reset();
   }
 
   return (
@@ -240,7 +244,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     <FormItem>
                       <FormLabel>Procedure</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Appendectomy" {...field} />
+                        <Input placeholder="e.g., Appendectomy" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -253,7 +257,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Patient</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a patient" />
@@ -275,7 +279,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Doctor</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a doctor" />
@@ -337,7 +341,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Start Time</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -359,7 +363,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>End Time</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -382,7 +386,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Operating Room</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a room" />
@@ -406,7 +410,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                         <FormItem>
                           <FormLabel>Anesthesia Type</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., General" {...field} />
+                            <Input placeholder="e.g., General" {...field} value={field.value || ''} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -419,7 +423,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                         <FormItem>
                           <FormLabel>Anesthesiologist</FormLabel>
                           <FormControl>
-                            <Input placeholder="Dr. Jane Doe" {...field} />
+                            <Input placeholder="Dr. Jane Doe" {...field} value={field.value || ''} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -432,7 +436,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || 'scheduled'}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Set status" />
@@ -453,9 +457,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     name="assistant_surgeon"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Assistant Surgeon</FormLabel>
+                        <FormLabel>Assistant Surgeon (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Dr. Alex Ray (Optional)" {...field} />
+                          <Input placeholder="Dr. Alex Ray" {...field} value={field.value || ''}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -466,9 +470,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     name="nurses"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nurses</FormLabel>
+                        <FormLabel>Nurses (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nurse 1, Nurse 2, ... (comma-separated)" {...field} />
+                          <Input placeholder="Nurse 1, Nurse 2, ... (comma-separated)" {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -479,9 +483,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     name="remarks"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Doctor's Remarks</FormLabel>
+                        <FormLabel>Doctor's Remarks (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Post-surgery comments..." {...field} />
+                          <Textarea placeholder="Post-surgery comments..." {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -492,9 +496,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     name="instruments"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Instruments Required</FormLabel>
+                        <FormLabel>Instruments Required (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="List required instruments (comma-separated)..." {...field} />
+                          <Textarea placeholder="List required instruments (comma-separated)..." {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -505,9 +509,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     name="drugs_used"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Drugs / Materials</FormLabel>
+                        <FormLabel>Drugs / Materials (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="List required drugs and materials (comma-separated)..." {...field} />
+                          <Textarea placeholder="List required drugs and materials (comma-separated)..." {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -518,9 +522,9 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
                     name="report_url"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Report URL</FormLabel>
+                        <FormLabel>Report URL (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://example.com/report.pdf (Optional)" {...field} />
+                          <Input placeholder="https://example.com/report.pdf" {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

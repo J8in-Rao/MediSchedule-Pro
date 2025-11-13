@@ -23,7 +23,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { OperatingRoom } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -57,11 +57,24 @@ function OTForm({ isOpen, setIsOpen, ot }: { isOpen: boolean, setIsOpen: (open: 
   const firestore = useFirestore();
   const form = useForm<z.infer<typeof otFormSchema>>({
     resolver: zodResolver(otFormSchema),
-    defaultValues: ot ? {
-      ...ot,
-      equipment: ot.equipment?.join(', '),
-    } : { room_number: '', capacity: 1, status: 'available', equipment: '' },
+    defaultValues: { room_number: '', capacity: 1, status: 'available', equipment: '' }
   });
+
+  useEffect(() => {
+    if (ot) {
+      form.reset({
+        ...ot,
+        equipment: ot.equipment?.join(', ') || '',
+      });
+    } else {
+      form.reset({
+        room_number: '',
+        capacity: 1,
+        status: 'available',
+        equipment: '',
+      });
+    }
+  }, [ot, form, isOpen]);
   
   function onSubmit(values: z.infer<typeof otFormSchema>) {
     const data = {
@@ -78,7 +91,6 @@ function OTForm({ isOpen, setIsOpen, ot }: { isOpen: boolean, setIsOpen: (open: 
       toast({ title: 'Operating Room Added' });
     }
     setIsOpen(false);
-    form.reset();
   }
 
   return (

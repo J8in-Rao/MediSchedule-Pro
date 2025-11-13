@@ -6,7 +6,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { ChartConfig } from "@/components/ui/chart"
-import type { OperationSchedule } from "@/lib/types";
+import type { OperationSchedule, Doctor } from "@/lib/types";
 import { useMemo } from "react";
 
 /**
@@ -25,16 +25,17 @@ const chartConfig = {
 
 type SurgeriesPerDoctorChartProps = {
   surgeries: OperationSchedule[];
+  doctors: Doctor[];
 }
 
-export default function SurgeriesPerDoctorChart({ surgeries }: SurgeriesPerDoctorChartProps) {
+export default function SurgeriesPerDoctorChart({ surgeries, doctors }: SurgeriesPerDoctorChartProps) {
   // Memoizing the data processing is important for performance.
   const data = useMemo(() => {
+    const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
+
     // We group surgeries by doctor name and count them.
     const surgeriesByDoctor = surgeries.reduce((acc, surgery) => {
-      // This assumes 'doctorName' is pre-populated on the surgery object.
-      // If not, we'd need to fetch and map doctor data here or in the parent component.
-      const doctorName = surgery.doctorName || surgery.doctor_id;
+      const doctorName = doctorMap.get(surgery.doctor_id) || surgery.doctor_id;
       acc[doctorName] = (acc[doctorName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -44,7 +45,7 @@ export default function SurgeriesPerDoctorChart({ surgeries }: SurgeriesPerDocto
       doctor: name,
       surgeries: count,
     }));
-  }, [surgeries]);
+  }, [surgeries, doctors]);
 
   if (!surgeries || surgeries.length === 0) {
     return <div className="h-[350px] w-full flex items-center justify-center text-muted-foreground">No data available to display.</div>;

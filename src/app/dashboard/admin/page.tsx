@@ -227,23 +227,22 @@ export default function AdminDashboardPage() {
       </div>
 
       {selectedSurgery && (
-        <>
-            <ScheduleDetails
-                isOpen={isDetailsOpen}
-                setIsOpen={setIsDetailsOpen}
-                surgery={selectedSurgery}
-                onEdit={handleEdit}
-            />
-            <ScheduleForm
-                isOpen={isFormOpen}
-                setIsOpen={setIsFormOpen}
-                surgery={selectedSurgery}
-                doctors={doctors || []}
-                patients={patients || []}
-                request={getRequestForSurgery(selectedSurgery)}
-            />
-        </>
+        <ScheduleDetails
+            isOpen={isDetailsOpen}
+            setIsOpen={setIsDetailsOpen}
+            surgery={selectedSurgery}
+            onEdit={handleEdit}
+        />
       )}
+      
+      <ScheduleForm
+          isOpen={isFormOpen}
+          setIsOpen={setIsFormOpen}
+          surgery={selectedSurgery || undefined}
+          doctors={doctors || []}
+          patients={patients || []}
+          request={getRequestForSurgery(selectedSurgery)}
+      />
     </>
   );
 }

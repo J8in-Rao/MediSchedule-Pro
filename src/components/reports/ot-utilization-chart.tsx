@@ -6,7 +6,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { ChartConfig } from "@/components/ui/chart"
-import type { OperationSchedule } from "@/lib/types";
+import type { OperationSchedule, OperatingRoom } from "@/lib/types";
 import { useMemo } from "react";
 
 /**
@@ -21,16 +21,18 @@ const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--ch
 
 type OtUtilizationChartProps = {
   surgeries: OperationSchedule[];
+  operatingRooms: OperatingRoom[];
 }
 
-export default function OtUtilizationChart({ surgeries }: OtUtilizationChartProps) {
+export default function OtUtilizationChart({ surgeries, operatingRooms }: OtUtilizationChartProps) {
   // The data processing logic is memoized with useMemo. This is a performance optimization
   // to ensure that the heavy computation of summarizing data only runs when the `surgeries` prop actually changes.
   const { data, config } = useMemo(() => {
+    const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
+    
     // We reduce the surgeries array into an object that counts surgeries per OT room.
     const utilization = surgeries.reduce((acc, surgery) => {
-      // Note: We need to fetch OT room numbers in the parent for a better label.
-      const roomKey = `OT ${surgery.ot_id}`;
+      const roomKey = `OT ${roomMap.get(surgery.ot_id) || surgery.ot_id}`;
       acc[roomKey] = (acc[roomKey] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -49,7 +51,7 @@ export default function OtUtilizationChart({ surgeries }: OtUtilizationChartProp
     }, {} as ChartConfig);
 
     return { data: chartData, config: chartConfig };
-  }, [surgeries]);
+  }, [surgeries, operatingRooms]);
 
 
   if (!surgeries || surgeries.length === 0) {

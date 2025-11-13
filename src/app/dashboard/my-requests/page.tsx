@@ -54,6 +54,7 @@ export default function MyRequestsPage() {
 
   const handleEdit = (request: SurgeryRequest) => {
     setSelectedRequest(request);
+    setIsDetailsOpen(false); // Close details if open
     setIsFormOpen(true);
   };
   
@@ -144,12 +145,14 @@ export default function MyRequestsPage() {
           </Table>
         </CardContent>
       </Card>
-      <RequestForm
-        isOpen={isFormOpen}
-        setIsOpen={setIsFormOpen}
-        request={selectedRequest}
-      />
-       {selectedRequest && (
+      {isFormOpen && (
+        <RequestForm
+            isOpen={isFormOpen}
+            setIsOpen={setIsFormOpen}
+            request={selectedRequest}
+        />
+      )}
+       {selectedRequest && !isFormOpen && (
         <RequestDetails
           isOpen={isDetailsOpen}
           setIsOpen={setIsDetailsOpen}
