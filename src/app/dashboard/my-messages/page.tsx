@@ -7,19 +7,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { toast } from '@/hooks/use-toast';
-import { collection, serverTimestamp, query, where, or, orderBy } from 'firebase/firestore';
+import { collection, serverTimestamp, query, where, or } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
-import type { SupportMessage, UserProfile } from '@/lib/types';
+import type { SupportMessage } from '@/lib/types';
 import { useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 export default function MyMessagesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Query for messages where the current user is either the sender or receiver of a message to/from the admin group
+  // Query for messages where the current user is either the sender or receiver
   const messagesQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -27,8 +28,7 @@ export default function MyMessagesPage() {
         or(
             where("sender_id", "==", user.uid),
             where("receiver_id", "==", user.uid)
-        ),
-        orderBy("timestamp", "asc")
+        )
     );
   }, [firestore, user]);
   
@@ -68,11 +68,15 @@ export default function MyMessagesPage() {
   
   const filteredMessages = useMemo(() => {
     if (!messages) return [];
-    // Filter messages for the specific doctor-admin conversation
+    // Filter messages for the specific doctor-admin conversation and sort them
     return messages.filter(msg => 
         (msg.sender_id === user?.uid && msg.receiver_id === 'admin-group') || 
         (msg.sender_id === 'admin-group' && msg.receiver_id === user?.uid)
-    );
+    ).sort((a, b) => {
+        const aTimestamp = a.timestamp ? (a.timestamp as any).seconds : 0;
+        const bTimestamp = b.timestamp ? (b.timestamp as any).seconds : 0;
+        return aTimestamp - bTimestamp;
+    });
   }, [messages, user]);
 
   return (
