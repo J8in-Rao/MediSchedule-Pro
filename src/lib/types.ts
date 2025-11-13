@@ -60,6 +60,32 @@ export type OperationSchedule = {
   doctorName?: string;
 };
 
+export type SurgeryRequest = {
+  id: string;
+  requesting_doctor_id: string;
+  patient_id: string;
+  procedure_name: string;
+  diagnosis: string;
+  preferred_date: string; // ISO string
+  expected_duration: string;
+  anesthesia_type: string;
+  priority: 'Routine' | 'Semi-urgent' | 'Urgent' | 'Emergency';
+  assistant_surgeon?: string;
+  anesthesiologist?: string;
+  nurses_needed?: string;
+  required_instruments?: string;
+  required_drugs?: string;
+  uploads_url?: string;
+  additional_notes?: string;
+  status: 'Pending' | 'Approved' | 'Scheduled' | 'Rejected';
+  created_at: { seconds: number; nanoseconds: number } | Date;
+  updated_at: { seconds: number; nanoseconds: number } | Date;
+
+  // Client-side additions
+  patientName?: string;
+};
+
+
 export type OperatingRoom = {
   id: string;
   room_number: string;

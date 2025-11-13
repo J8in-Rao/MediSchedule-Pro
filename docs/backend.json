@@ -218,6 +218,47 @@
         "updated_at"
       ]
     },
+    "SurgeryRequest": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SurgeryRequest",
+        "description": "Represents a surgery request made by a doctor.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "requesting_doctor_id": { "type": "string" },
+            "patient_id": { "type": "string" },
+            "procedure_name": { "type": "string" },
+            "diagnosis": { "type": "string" },
+            "preferred_date": { "type": "string", "format": "date" },
+            "expected_duration": { "type": "string" },
+            "anesthesia_type": { "type": "string" },
+            "priority": { "type": "string", "enum": ["Routine", "Semi-urgent", "Urgent", "Emergency"] },
+            "assistant_surgeon": { "type": "string" },
+            "anesthesiologist": { "type": "string" },
+            "nurses_needed": { "type": "string" },
+            "required_instruments": { "type": "string" },
+            "required_drugs": { "type": "string" },
+            "uploads_url": { "type": "string", "format": "uri" },
+            "additional_notes": { "type": "string" },
+            "status": { "type": "string", "enum": ["Pending", "Approved", "Scheduled", "Rejected"] },
+            "created_at": { "type": "string", "format": "date-time" },
+            "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+            "requesting_doctor_id",
+            "patient_id",
+            "procedure_name",
+            "diagnosis",
+            "preferred_date",
+            "expected_duration",
+            "anesthesia_type",
+            "priority",
+            "assistant_surgeon",
+            "status",
+            "created_at",
+            "updated_at"
+        ]
+    },
     "OperatingRoom": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "OperatingRoom",
@@ -310,6 +351,13 @@
         }
       },
       {
+        "path": "/surgery_requests/{requestId}",
+        "definition": {
+            "schema": { "$ref": "#/entities/SurgeryRequest" },
+            "description": "Stores surgery requests made by doctors."
+        }
+      },
+      {
         "path": "/resources/{resourceId}",
         "definition": {
           "schema": { "$ref": "#/entities/Resource" },
@@ -326,5 +374,3 @@
     ]
   }
 }
-
-    

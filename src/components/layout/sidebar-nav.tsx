@@ -19,6 +19,8 @@ import {
   Package,
   MessageSquare,
   Scissors,
+  Send,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +36,8 @@ const allNavItems = [
   { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages', roles: ['admin'] },
   // Doctor Roles
   { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
+  { href: '/dashboard/request-surgery', icon: Send, label: 'Request Surgery', roles: ['doctor']},
+  { href: '/dashboard/my-requests', icon: FileText, label: 'My Requests', roles: ['doctor'] },
   { href: '/dashboard/operations', icon: Scissors, label: 'Operations', roles: ['doctor'] },
   { href: '/dashboard/my-patients', icon: Users, label: 'Patients', roles: ['doctor'] },
   { href: '/dashboard/my-messages', icon: MessageSquare, label: 'Messages', roles: ['doctor'] },

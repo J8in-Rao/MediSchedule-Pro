@@ -17,7 +17,9 @@ import {
   Moon,
   Sun,
   MessageSquare,
-  Scissors
+  Scissors,
+  Send,
+  FileText
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -55,6 +57,8 @@ const allMobileNavItems = [
   { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
   { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },
+  { href: '/dashboard/request-surgery', icon: Send, label: 'Request Surgery', roles: ['doctor']},
+  { href: '/dashboard/my-requests', icon: FileText, label: 'My Requests', roles: ['doctor'] },
   { href: '/dashboard/my-patients', icon: Users, label: 'Patients', roles: ['doctor'] },
   { href: '/dashboard/operations', icon: Scissors, label: 'Operations', roles: ['doctor'] },
   { href: '/dashboard/ots', icon: Hospital, label: 'OTs', roles: ['admin'] },
