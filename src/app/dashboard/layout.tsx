@@ -1,4 +1,6 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/header';
 import SidebarNav from '@/components/layout/sidebar-nav';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -16,14 +18,30 @@ export default function DashboardLayout({
 }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
   const isLoading = isUserLoading || isProfileLoading;
 
+  useEffect(() => {
+    // If the initial user loading is complete and there is no user, redirect to login.
+    if (!isUserLoading && !user) {
+      router.replace('/');
+    }
+  }, [isUserLoading, user, router]);
+
+
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+  
+  // If we are still here after the loading is done, but there's no user,
+  // it means the redirect is about to happen. Render a loading state
+  // to avoid showing the dashboard page content for a split second.
+  if (!user) {
+      return <div className="flex h-screen items-center justify-center">Redirecting...</div>;
   }
 
   return (
@@ -38,5 +56,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-
-    
