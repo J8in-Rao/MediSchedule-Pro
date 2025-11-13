@@ -16,10 +16,11 @@ import { useMemo } from "react";
  * It processes the raw surgery data, which should ideally include doctor names.
  */
 
+const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+
 const chartConfig = {
   surgeries: {
     label: "Surgeries",
-    color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig
 
@@ -41,9 +42,10 @@ export default function SurgeriesPerDoctorChart({ surgeries, doctors }: Surgerie
     }, {} as Record<string, number>);
 
     // Format the aggregated data into an array for the chart.
-    return Object.entries(surgeriesByDoctor).map(([name, count]) => ({
+    return Object.entries(surgeriesByDoctor).map(([name, count], index) => ({
       doctor: name,
       surgeries: count,
+      fill: chartColors[index % chartColors.length]
     }));
   }, [surgeries, doctors]);
 
@@ -67,7 +69,7 @@ export default function SurgeriesPerDoctorChart({ surgeries, doctors }: Surgerie
             allowDecimals={false}
           />
           <Tooltip cursor={false} content={<ChartTooltipContent />} />
-          <Bar dataKey="surgeries" fill="var(--color-surgeries)" radius={4} />
+          <Bar dataKey="surgeries" radius={4} />
         </BarChart>
       </ChartContainer>
     </div>
