@@ -44,7 +44,7 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Surgeries by Type</CardTitle>
             <CardDescription>Distribution of surgeries across different medical specializations.</CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
              {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SurgeriesByTypeChart surgeries={surgeries || []} doctors={doctors || []} />}
           </CardContent>
@@ -55,7 +55,7 @@ export default function ReportsPage() {
             <CardDescription>Total number of surgeries assigned to each doctor.</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SurgeriesPerDoctorChart surgeries={surgeries || []} />}
+            {isLoading ? <Skeleton className="h--[350px] w-full" /> : <SurgeriesPerDoctorChart surgeries={surgeries || []} />}
           </CardContent>
         </Card>
       </div>
