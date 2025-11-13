@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -9,6 +10,7 @@ import { AlertCircle, ArrowRight, Bell, Check, Clock, ListTodo, User } from 'luc
 import { format, isToday } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useMemo } from 'react';
 
 function getStatusBadgeVariant(status: OperationSchedule['status']) {
   switch (status) {
@@ -52,51 +54,65 @@ export default function DoctorDashboardPage() {
   });
 
   const pendingTasks = surgeries?.filter(s => s.status !== 'completed' && s.status !== 'cancelled' && new Date(s.date) < new Date()).length || 0;
+  
+  const assignedPatientCount = useMemo(() => {
+    if (!surgeries) return 0;
+    const patientIds = new Set(surgeries.map(s => s.patient_id));
+    return patientIds.size;
+  }, [surgeries]);
+
 
   const isLoading = isLoadingSurgeries || isLoadingPatients;
 
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next Operation</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? <p>Loading...</p> : nextOperation ? (
-              <div>
-                <p className="text-lg font-bold">{nextOperation.procedure}</p>
-                <p className="text-xs text-muted-foreground">
-                  {patientMap.get(nextOperation.patient_id)} at {nextOperation.start_time}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No upcoming operations today.</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
-            <ListTodo className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingTasks}</div>
-            <p className="text-xs text-muted-foreground">Surgeries needing remarks</p>
-          </CardContent>
-        </Card>
-         <Card>
+        <Link href="/dashboard/operations">
+          <Card className="hover:bg-muted/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Next Operation</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {isLoading ? <p>Loading...</p> : nextOperation ? (
+                <div>
+                  <p className="text-lg font-bold">{nextOperation.procedure}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {patientMap.get(nextOperation.patient_id)} at {nextOperation.start_time}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No upcoming operations today.</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/operations">
+          <Card className="hover:bg-muted/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
+              <ListTodo className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingTasks}</div>
+              <p className="text-xs text-muted-foreground">Surgeries needing remarks</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/my-patients">
+         <Card className="hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             <div className="text-2xl font-bold">{patientMap.size}</div>
+             <div className="text-2xl font-bold">{assignedPatientCount}</div>
             <p className="text-xs text-muted-foreground">Assigned to you</p>
           </CardContent>
         </Card>
-         <Card>
+        </Link>
+        <Link href="/dashboard/my-messages">
+         <Card className="hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Alerts</CardTitle>
             <Bell className="h-4 w-4 text-muted-foreground" />
@@ -106,6 +122,7 @@ export default function DoctorDashboardPage() {
              <p className="text-xs text-muted-foreground">No new alerts</p>
           </CardContent>
         </Card>
+        </Link>
       </div>
 
       <Card>

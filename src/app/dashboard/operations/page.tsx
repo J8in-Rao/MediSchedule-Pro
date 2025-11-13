@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
-import type { OperationSchedule, Patient } from '@/lib/types';
+import type { OperationSchedule, Patient, OperatingRoom } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
@@ -94,14 +95,23 @@ export default function DoctorOperationsPage() {
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
   
+  const otsCollection = useMemoFirebase(() => collection(firestore, 'ot_rooms'), [firestore]);
+  const { data: operatingRooms, isLoading: isLoadingOts } = useCollection<OperatingRoom>(otsCollection);
+
   const patientMap = useMemo(() => {
     if (!patients) return new Map();
     return new Map(patients.map(p => [p.id, p.name]));
   }, [patients]);
+  
+  const roomMap = useMemo(() => {
+    if (!operatingRooms) return new Map();
+    return new Map(operatingRooms.map(r => [r.id, r.room_number]));
+  }, [operatingRooms]);
+
 
   const upcomingSurgeries = surgeries?.filter(s => new Date(s.date) >= new Date() && s.status === 'scheduled');
   const pastSurgeries = surgeries?.filter(s => new Date(s.date) < new Date() || s.status !== 'scheduled');
-  const isLoading = isLoadingSurgeries || isLoadingPatients;
+  const isLoading = isLoadingSurgeries || isLoadingPatients || isLoadingOts;
 
   return (
     <div className="grid gap-6">
@@ -126,7 +136,7 @@ export default function DoctorOperationsPage() {
                       <Clock className="w-4 h-4" />
                       <span>{surgery.start_time} - {surgery.end_time}</span>
                     </div>
-                    <div className="font-medium">OT-{surgery.ot_id}</div>
+                    <div className="font-medium">OT-{roomMap.get(surgery.ot_id)}</div>
                     <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                   </div>
                 </div>
@@ -156,7 +166,7 @@ export default function DoctorOperationsPage() {
                   </div>
                    <div className="flex flex-col items-end gap-2">
                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="font-medium">OT-{surgery.ot_id}</div>
+                        <div className="font-medium">OT-{roomMap.get(surgery.ot_id)}</div>
                         <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                     </div>
                     {surgery.status !== 'completed' && <RemarksDialog surgery={surgery} patientName={patientMap.get(surgery.patient_id) || 'Unknown'} />}
