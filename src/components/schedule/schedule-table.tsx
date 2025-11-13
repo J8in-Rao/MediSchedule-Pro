@@ -55,12 +55,12 @@ interface ScheduleTableProps {
   doctors: Doctor[];
   patients: Patient[];
   operatingRooms: OperatingRoom[];
-  onAdd: () => void;
+  onViewDetails: (surgery: OperationSchedule) => void;
 }
 
 const MAX_VISIBLE_COLUMNS = 7;
 
-export function ScheduleTable({ data, doctors, patients, operatingRooms, onAdd }: ScheduleTableProps) {
+export function ScheduleTable({ data, doctors, patients, operatingRooms, onViewDetails }: ScheduleTableProps) {
   const { toast } = useToast();
   // State management for TanStack Table features.
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -74,33 +74,24 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms, onAdd }
   });
   const [rowSelection, setRowSelection] = React.useState({});
 
-  // State for managing the details side panel.
-  const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
-  const [selectedSurgery, setSelectedSurgery] = React.useState<OperationSchedule | null>(null);
-
   // This is a critical piece of logic. We process the raw data from Firestore here.
   // It maps IDs (like patient_id, doctor_id) to their corresponding names.
   // useMemo ensures this expensive operation only runs when the source data changes.
   const processedData: OperationSchedule[] = React.useMemo(() => {
-    // Data is now denormalized and comes directly from the parent
+    const patientMap = new Map(patients.map(p => [p.id, p.name]));
+    const doctorMap = new Map(doctors.map(d => [d.id, d.name]));
     const roomMap = new Map(operatingRooms.map(r => [r.id, r.room_number]));
     return data.map(surgery => ({
       ...surgery,
+      patientName: patientMap.get(surgery.patient_id) || surgery.patient_id,
+      doctorName: doctorMap.get(surgery.doctor_id) || surgery.doctor_id,
       room: `OT-${roomMap.get(surgery.ot_id) || surgery.ot_id}`,
       time: `${surgery.start_time} - ${surgery.end_time}`,
     }));
-  }, [data, operatingRooms]);
+  }, [data, doctors, patients, operatingRooms]);
 
-  // This function is passed to the columns definition.
-  // It sets the selected surgery and opens the details panel.
-  const handleViewDetails = (surgery: OperationSchedule) => {
-    const fullSurgeryDetails = processedData.find(p => p.id === surgery.id);
-    setSelectedSurgery(fullSurgeryDetails || null);
-    setIsDetailsOpen(true);
-  };
-  
   // Memoizing the columns definition prevents it from being recalculated on every render.
-  const columns = React.useMemo(() => getColumns({ onViewDetails: handleViewDetails }), [processedData]);
+  const columns = React.useMemo(() => getColumns({ onViewDetails: onViewDetails }), [onViewDetails]);
 
 
   const table = useReactTable({
@@ -206,9 +197,16 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms, onAdd }
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => onViewDetails(row.original)}
+                  className="cursor-pointer"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} onClick={(e) => {
+                      // Prevent row click when interacting with checkbox
+                      if (cell.column.id === 'select' || cell.column.id === 'actions') {
+                        e.stopPropagation();
+                      }
+                    }}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -255,14 +253,6 @@ export function ScheduleTable({ data, doctors, patients, operatingRooms, onAdd }
           </Button>
         </div>
       </div>
-      {/* The Details Panel, which is rendered conditionally */}
-       {selectedSurgery && (
-        <ScheduleDetails
-            isOpen={isDetailsOpen}
-            setIsOpen={setIsDetailsOpen}
-            surgery={selectedSurgery}
-        />
-      )}
     </div>
   );
 }
