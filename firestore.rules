@@ -69,6 +69,13 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && (isAdmin() || resource.data.sender_id == request.auth.uid || resource.data.receiver_id == request.auth.uid);
       allow create: if isSignedIn();
     }
+    
+     // Contact Messages from Support Form
+    match /contact_messages/{messageId} {
+      allow read, write: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
 
     // OPERATION SCHEDULES
     match /operation_schedules/{operationId} {
@@ -91,9 +98,9 @@ service cloud.firestore {
         resource.data.requesting_doctor_id == request.auth.uid &&
         // Doctors can only update/cancel if status is 'Pending'
         resource.data.status == 'Pending' &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'requesting_doctor_id', 'created_at'])
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'requesting_doctor_id', 'created_at', 'status'])
       );
-      // No delete for requests, they should be 'cancelled'
+      // No delete for requests, they should be 'cancelled' or rejected by admin
       allow delete: if false; 
     }
   }

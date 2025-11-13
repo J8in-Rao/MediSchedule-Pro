@@ -21,12 +21,14 @@ import {
   Scissors,
   Send,
   FileText,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const allNavItems = [
   // Admin Roles
   { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
+  { href: '/dashboard/requests', icon: ClipboardList, label: 'Requests', roles: ['admin'] },
   { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
   { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },
   { href: '/dashboard/patients', icon: Users, label: 'Patients', roles: ['admin'] },

@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Doctor, Patient, OperationSchedule, OperatingRoom } from "@/lib/types";
+import { Doctor, Patient, OperationSchedule, OperatingRoom, SurgeryRequest } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -85,9 +85,10 @@ type ScheduleFormProps = {
   doctors: Doctor[];
   patients: Patient[];
   surgery?: OperationSchedule;
+  request?: SurgeryRequest;
 };
 
-export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: ScheduleFormProps) {
+export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, request }: ScheduleFormProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   
@@ -96,31 +97,56 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: surgery ? {
-      ...surgery,
-      date: new Date(surgery.date),
-      nurses: surgery.nurses?.join(', '),
-      drugs_used: surgery.drugs_used?.join(', '),
-      instruments: surgery.instruments?.join(', '),
-    } : {
-      procedure: "",
-      patient_id: "",
-      doctor_id: "",
-      date: new Date(),
-      start_time: "09:00",
-      end_time: "10:00",
-      ot_id: "",
-      anesthesia_type: "",
-      anesthesiologist: "",
-      assistant_surgeon: "",
-      nurses: "",
-      remarks: "",
-      report_url: "",
-      drugs_used: "",
-      instruments: "",
-      status: 'scheduled',
-    },
   });
+
+  React.useEffect(() => {
+    if (request) {
+        form.reset({
+            procedure: request.procedure_name,
+            patient_id: request.patient_id,
+            doctor_id: request.requesting_doctor_id,
+            date: new Date(request.preferred_date),
+            start_time: "09:00",
+            end_time: "10:00",
+            ot_id: "",
+            anesthesia_type: request.anesthesia_type,
+            anesthesiologist: request.anesthesiologist || "",
+            assistant_surgeon: request.assistant_surgeon || "",
+            nurses: request.nurses_needed || "",
+            instruments: request.required_instruments || "",
+            drugs_used: request.required_drugs || "",
+            remarks: request.additional_notes || "",
+            status: 'scheduled',
+        });
+    } else if (surgery) {
+        form.reset({
+            ...surgery,
+            date: new Date(surgery.date),
+            nurses: surgery.nurses?.join(', '),
+            drugs_used: surgery.drugs_used?.join(', '),
+            instruments: surgery.instruments?.join(', '),
+        });
+    } else {
+        form.reset({
+            procedure: "",
+            patient_id: "",
+            doctor_id: "",
+            date: new Date(),
+            start_time: "09:00",
+            end_time: "10:00",
+            ot_id: "",
+            anesthesia_type: "",
+            anesthesiologist: "",
+            assistant_surgeon: "",
+            nurses: "",
+            remarks: "",
+            report_url: "",
+            drugs_used: "",
+            instruments: "",
+            status: 'scheduled',
+        });
+    }
+  }, [surgery, request, form]);
   
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
@@ -139,6 +165,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
     if (surgery) {
       const surgeryRef = doc(firestore, "operation_schedules", surgery.id);
       setDocumentNonBlocking(surgeryRef, { ...surgeryData, updated_at: serverTimestamp() }, { merge: true });
+       toast({ title: "Operation Updated", description: `The operation "${values.procedure}" has been successfully updated.`});
     } else {
       addDocumentNonBlocking(collection(firestore, 'operation_schedules'), {
         ...surgeryData,
@@ -146,12 +173,15 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
         created_at: serverTimestamp(),
         updated_at: serverTimestamp()
       });
+      toast({ title: "Operation Scheduled", description: `The operation "${values.procedure}" has been successfully scheduled.`});
+    }
+
+    // If this schedule was created from a request, update the request status
+    if (request) {
+      const requestRef = doc(firestore, "surgery_requests", request.id);
+      setDocumentNonBlocking(requestRef, { status: "Scheduled" }, { merge: true });
     }
     
-    toast({
-      title: surgery ? "Operation Updated" : "Operation Scheduled",
-      description: `The operation "${values.procedure}" has been successfully saved.`,
-    });
     setIsOpen(false);
     form.reset();
   }
@@ -185,7 +215,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Patient</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a patient" />
@@ -207,7 +237,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Doctor</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a doctor" />
@@ -469,5 +499,3 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery }: 
     </Dialog>
   );
 }
-
-    

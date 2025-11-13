@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Scissors,
   Send,
-  FileText
+  FileText,
+  ClipboardList
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -53,6 +54,7 @@ import { toast } from '@/hooks/use-toast';
 
 const allMobileNavItems = [
   { href: '/dashboard/admin', icon: LayoutGrid, label: 'Dashboard', roles: ['admin'] },
+  { href: '/dashboard/requests', icon: ClipboardList, label: 'Requests', roles: ['admin'] },
   { href: '/dashboard/doctor', icon: LayoutGrid, label: 'Dashboard', roles: ['doctor'] },
   { href: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule', roles: ['admin'] },
   { href: '/dashboard/staff', icon: Stethoscope, label: 'Staff', roles: ['admin'] },

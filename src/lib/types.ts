@@ -76,12 +76,13 @@ export type SurgeryRequest = {
   required_drugs?: string;
   uploads_url?: string;
   additional_notes?: string;
-  status: 'Pending' | 'Approved' | 'Scheduled' | 'Rejected';
+  status: 'Pending' | 'Approved' | 'Scheduled' | 'Rejected' | 'Cancelled';
   created_at: { seconds: number; nanoseconds: number } | Date;
   updated_at: { seconds: number; nanoseconds: number } | Date;
 
   // Client-side additions
   patientName?: string;
+  doctorName?: string;
 };
 
 
@@ -120,18 +121,22 @@ export type SurgeryByType = {
 };
 
 export type SupportMessage = {
-  id: string;
-  sender_id: string;
-  receiver_id?: string;
-  text: string;
-  timestamp: { seconds: number; nanoseconds: number } | Date;
-  read: boolean;
-  type: 'system' | 'manual';
-  // Client-side additions
-  userName?: string;
-  userEmail?: string;
-  status?: 'New' | 'Read' | 'Resolved';
-  message?: string;
+    id: string;
+    sender_id: string;
+    receiver_id: string;
+    text: string;
+    timestamp: { seconds: number, nanoseconds: number } | Date;
+    read: boolean;
+    type: 'system' | 'manual';
 };
 
-    
+// This type was for the support contact form, keeping it separate
+export type ContactMessage = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  message: string;
+  createdAt: { seconds: number, nanoseconds: number } | Date;
+  status: 'New' | 'Read' | 'Resolved';
+}

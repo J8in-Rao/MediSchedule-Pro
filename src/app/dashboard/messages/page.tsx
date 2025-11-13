@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
-import type { SupportMessage } from '@/lib/types';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
+import type { ContactMessage } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 import {
   DropdownMenu,
@@ -24,17 +24,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
-import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { toast } from '@/hooks/use-toast';
 
 export default function MessagesPage() {
   const firestore = useFirestore();
-  const messagesCollection = useMemoFirebase(() => query(collection(firestore, 'messages'), orderBy('createdAt', 'desc')), [firestore]);
-  const { data: messages, isLoading } = useCollection<SupportMessage>(messagesCollection);
+  const messagesCollection = useMemoFirebase(() => query(collection(firestore, 'contact_messages'), orderBy('createdAt', 'desc')), [firestore]);
+  const { data: messages, isLoading } = useCollection<ContactMessage>(messagesCollection);
 
-  const handleStatusChange = (id: string, status: SupportMessage['status']) => {
-    const messageRef = doc(firestore, 'messages', id);
+  const handleStatusChange = (id: string, status: ContactMessage['status']) => {
+    const messageRef = doc(firestore, 'contact_messages', id);
     updateDocumentNonBlocking(messageRef, { status });
     toast({
       title: 'Status Updated',
@@ -42,7 +41,7 @@ export default function MessagesPage() {
     });
   }
 
-  const getStatusBadgeVariant = (status: SupportMessage['status']) => {
+  const getStatusBadgeVariant = (status: ContactMessage['status']) => {
     switch (status) {
       case 'Resolved':
         return 'secondary';

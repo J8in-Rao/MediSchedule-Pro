@@ -77,7 +77,7 @@ export default function SupportPage() {
       return;
     }
 
-    const messagesCollection = collection(firestore, 'messages');
+    const messagesCollection = collection(firestore, 'contact_messages');
     addDocumentNonBlocking(messagesCollection, {
       userId: user.uid,
       userName: `${userProfile.firstName} ${userProfile.lastName}`,
