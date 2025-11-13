@@ -9,6 +9,13 @@ import { ChartConfig } from "@/components/ui/chart"
 import type { OperationSchedule } from "@/lib/types";
 import { useMemo } from "react";
 
+/**
+ * A client component that renders a bar chart showing the number of surgeries per doctor.
+ * 
+ * This provides a clear view of workload distribution among the medical staff.
+ * It processes the raw surgery data, which should ideally include doctor names.
+ */
+
 const chartConfig = {
   surgeries: {
     label: "Surgeries",
@@ -21,13 +28,18 @@ type SurgeriesPerDoctorChartProps = {
 }
 
 export default function SurgeriesPerDoctorChart({ surgeries }: SurgeriesPerDoctorChartProps) {
+  // Memoizing the data processing is important for performance.
   const data = useMemo(() => {
+    // We group surgeries by doctor name and count them.
     const surgeriesByDoctor = surgeries.reduce((acc, surgery) => {
-      const doctorName = surgery.doctorName;
+      // This assumes 'doctorName' is pre-populated on the surgery object.
+      // If not, we'd need to fetch and map doctor data here or in the parent component.
+      const doctorName = surgery.doctorName || surgery.doctor_id;
       acc[doctorName] = (acc[doctorName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
+    // Format the aggregated data into an array for the chart.
     return Object.entries(surgeriesByDoctor).map(([name, count]) => ({
       doctor: name,
       surgeries: count,

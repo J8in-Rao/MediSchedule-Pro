@@ -11,6 +11,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 
+/**
+ * Renders the main dashboard for the 'admin' role.
+ * 
+ * This page provides a high-level overview of the day's surgical operations.
+ * Key features include:
+ * - A calendar for date selection.
+ * - Statistics cards showing total, completed, in-progress, and scheduled surgeries for the selected day.
+ * - A detailed list of surgeries for the selected day with key information like procedure, patient, doctor, and status.
+ * 
+ * The component fetches data in real-time from the 'operation_schedules' collection in Firestore
+ * based on the selected date.
+ */
+
+// Helper function to determine the visual style of the status badge based on the surgery's status.
 function getStatusBadgeVariant(status: OperationSchedule['status']) {
   switch (status) {
     case 'completed':
@@ -28,14 +42,21 @@ export default function AdminDashboardPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const firestore = useFirestore();
 
+  // This query fetches surgeries from Firestore that match the selected date.
+  // It's memoized with useMemoFirebase to prevent unnecessary re-fetches on re-renders,
+  // which is critical for performance and cost management with Firestore.
   const surgeriesQuery = useMemoFirebase(() => {
     if (!date) return null;
     const dateString = format(date, 'yyyy-MM-dd');
+    // The query filters the 'operation_schedules' collection where the 'date' field equals our formatted date string.
     return query(collection(firestore, 'operation_schedules'), where('date', '==', dateString));
   }, [firestore, date]);
 
+  // The useCollection hook subscribes to the query in real-time.
   const { data: selectedDateSurgeries, isLoading } = useCollection<OperationSchedule>(surgeriesQuery);
 
+  // We calculate the statistics based on the fetched surgery data.
+  // This is derived from the state, so it will automatically update when the data changes.
   const stats = {
     total: selectedDateSurgeries?.length || 0,
     completed: selectedDateSurgeries?.filter((s) => s.status === 'completed').length || 0,
@@ -46,6 +67,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
       <div className="lg:col-span-5 grid auto-rows-max items-start gap-4">
+        {/* Statistics Cards */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -85,6 +107,7 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
+        {/* Surgeries List for the Selected Date */}
         <Card>
           <CardHeader>
             <CardTitle>Surgeries for {format(date || new Date(), 'MMMM d, yyyy')}</CardTitle>
@@ -98,6 +121,8 @@ export default function AdminDashboardPage() {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex-1 space-y-1">
                       <p className="font-semibold text-lg">{surgery.procedure}</p>
+                      {/* Note: Patient and Doctor names are currently just IDs.
+                          For Phase 2, we should fetch the corresponding documents to display full names. */}
                       <p className="text-sm text-muted-foreground">Patient: {surgery.patient_id}</p>
                       <p className="text-sm text-muted-foreground">Doctor: {surgery.doctor_id}</p>
                     </div>
@@ -106,6 +131,7 @@ export default function AdminDashboardPage() {
                             <Clock className="w-4 h-4"/>
                             <span>{surgery.start_time} - {surgery.end_time}</span>
                         </div>
+                         {/* Note: OT room number also needs to be fetched from a separate collection. */}
                         <div className="font-medium">OT-{surgery.ot_id}</div>
                         <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                     </div>
@@ -119,6 +145,7 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
+      {/* Calendar for Date Selection */}
       <div className="lg:col-span-2 space-y-4">
         <Card>
           <CardContent className="p-0">

@@ -12,6 +12,19 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
+/**
+ * Renders the main dashboard for the 'doctor' role.
+ * 
+ * This page serves as the landing spot for doctors, providing a quick summary of their day
+ * and actionable insights. It includes:
+ * - Summary cards for "Next Operation", "Pending Tasks", "Total Patients", and "Alerts".
+ * - A detailed schedule for the current day.
+ * 
+ * Data is fetched from multiple Firestore collections ('operation_schedules', 'patients')
+ * and processed on the client to provide relevant, user-specific information.
+ */
+
+// Helper to determine the visual style of a status badge.
 function getStatusBadgeVariant(status: OperationSchedule['status']) {
   switch (status) {
     case 'completed':
@@ -29,32 +42,43 @@ export default function DoctorDashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
+  // This query fetches all surgeries assigned to the currently logged-in doctor.
   const surgeriesQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(collection(firestore, 'operation_schedules'), where('doctor_id', '==', user.uid));
   }, [firestore, user]);
 
+  // These hooks subscribe to the 'operation_schedules' and 'patients' collections in real-time.
+  // We need both to display patient names alongside surgery details.
   const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesQuery);
-  
   const patientsCollection = useMemoFirebase(() => collection(firestore, 'patients'), [firestore]);
   const { data: patients, isLoading: isLoadingPatients } = useCollection<Patient>(patientsCollection);
   
-  const patientMap = useMemoFirebase(() => {
+  // A map is created to efficiently look up patient names by their ID.
+  // This avoids repeatedly searching the patients array.
+  const patientMap = useMemo(() => {
     if (!patients) return new Map();
     return new Map(patients.map(p => [p.id, p.name]));
   }, [patients]);
   
+  // Filter and sort today's surgeries for display.
   const todaySurgeries = surgeries?.filter(s => isToday(new Date(s.date))).sort((a, b) => a.start_time.localeCompare(b.start_time));
   
+  // Logic to find the very next scheduled operation for the "Next Operation" card.
   const nextOperation = todaySurgeries?.find(s => {
       const now = new Date();
+      // We parse the time string to create a proper Date object for comparison.
       const [hour, minute] = s.start_time.split(':');
       const startTime = new Date(new Date(s.date).setHours(parseInt(hour), parseInt(minute)));
       return startTime > now && s.status === 'scheduled';
   });
 
+  // This counts past surgeries that are not yet marked as 'completed' or 'cancelled'.
+  // This serves as a simple "to-do" list for doctors to add post-op remarks.
   const pendingTasks = surgeries?.filter(s => s.status !== 'completed' && s.status !== 'cancelled' && new Date(s.date) < new Date()).length || 0;
   
+  // This correctly calculates the number of unique patients assigned to this doctor.
+  // Using a Set ensures we don't double-count patients with multiple surgeries.
   const assignedPatientCount = useMemo(() => {
     if (!surgeries) return 0;
     const patientIds = new Set(surgeries.map(s => s.patient_id));
@@ -66,6 +90,7 @@ export default function DoctorDashboardPage() {
 
   return (
     <div className="grid gap-6">
+      {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Link href="/dashboard/operations">
           <Card className="hover:bg-muted/50 transition-colors">
@@ -118,6 +143,7 @@ export default function DoctorDashboardPage() {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
+            {/* Note: Alert functionality is not yet implemented. This is a placeholder. */}
             <div className="text-2xl font-bold">0</div>
              <p className="text-xs text-muted-foreground">No new alerts</p>
           </CardContent>
@@ -125,6 +151,7 @@ export default function DoctorDashboardPage() {
         </Link>
       </div>
 
+      {/* Today's Schedule Section */}
       <Card>
         <CardHeader>
           <CardTitle>Today's Schedule</CardTitle>
@@ -146,6 +173,7 @@ export default function DoctorDashboardPage() {
                       <Clock className="w-4 h-4" />
                       <span>{surgery.start_time} - {surgery.end_time}</span>
                     </div>
+                    {/* Note: OT room number also needs to be fetched from the 'ot_rooms' collection. */}
                     <div className="font-medium">OT-{surgery.ot_id}</div>
                     <Badge variant={getStatusBadgeVariant(surgery.status)}>{surgery.status}</Badge>
                     <Link href="/dashboard/operations">

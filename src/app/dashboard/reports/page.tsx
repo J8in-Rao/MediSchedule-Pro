@@ -13,7 +13,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function ReportsPage() {
   const firestore = useFirestore();
 
-  const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operations'), [firestore]);
+  // Fetching data for the reports. It's important that these collection paths match our Firestore database structure.
+  // BUG FIX: Changed 'operations' to 'operation_schedules' to match the actual collection name in Firestore.
+  const surgeriesCollection = useMemoFirebase(() => collection(firestore, 'operation_schedules'), [firestore]);
   const { data: surgeries, isLoading: isLoadingSurgeries } = useCollection<OperationSchedule>(surgeriesCollection);
 
   const doctorsCollection = useMemoFirebase(() => collection(firestore, 'doctors'), [firestore]);
@@ -34,6 +36,7 @@ export default function ReportsPage() {
             <CardDescription>Number of surgeries performed in each operating theater.</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* The loading state is handled here to show a skeleton UI, improving user experience. */}
             {isLoading ? <Skeleton className="h-[350px] w-full" /> : <OtUtilizationChart surgeries={surgeries || []} />}
           </CardContent>
         </Card>
@@ -41,7 +44,7 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Surgeries by Type</CardTitle>
             <CardDescription>Distribution of surgeries across different medical specializations.</CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
              {isLoading ? <Skeleton className="h-[350px] w-full" /> : <SurgeriesByTypeChart surgeries={surgeries || []} doctors={doctors || []} />}
           </CardContent>

@@ -13,6 +13,14 @@ import {
 import { ChartConfig } from "@/components/ui/chart"
 import type { OperationSchedule, Doctor } from "@/lib/types"
 
+/**
+ * A client component that renders a Pie Chart for surgeries grouped by type (specialization).
+ * 
+ * This chart is useful for understanding the distribution of different kinds of surgeries.
+ * It requires both surgery and doctor data to link a surgery to a doctor's specialization.
+ */
+
+// A mapping of specializations to specific chart colors for consistency.
 const chartColors = {
   Cardiology: "hsl(var(--chart-1))",
   Neurology: "hsl(var(--chart-2))",
@@ -29,22 +37,27 @@ type SurgeriesByTypeChartProps = {
 }
 
 export default function SurgeriesByTypeChart({ surgeries, doctors }: SurgeriesByTypeChartProps) {
+  // Data processing is memoized to avoid re-calculation on every render.
   const { data, config } = React.useMemo(() => {
+    // A Map is used for efficient lookup of a doctor's specialization by their ID.
     const doctorMap = new Map(doctors.map(doc => [doc.id, doc.specialization]));
 
+    // We reduce the surgeries array to count surgeries per specialization.
     const surgeriesBySpecialization = surgeries.reduce((acc, surgery) => {
-      const specialization = doctorMap.get(surgery.doctorId) || 'Other';
+      const specialization = doctorMap.get(surgery.doctor_id) || 'Other';
       const specKey: Specialization = Object.keys(chartColors).includes(specialization) ? specialization as Specialization : 'Other';
       acc[specKey] = (acc[specKey] || 0) + 1;
       return acc;
     }, {} as Record<Specialization, number>);
 
+    // The data is then formatted into the structure required by the charting library.
     const chartData = Object.entries(surgeriesBySpecialization).map(([type, count]) => ({
       type: type as Specialization,
       count,
       fill: chartColors[type as Specialization],
     }));
 
+    // A config object is created to define labels and colors for the chart's legend and tooltips.
     const chartConfig: ChartConfig = Object.keys(chartColors).reduce((acc, key) => {
       acc[key] = {
         label: key,
@@ -80,6 +93,7 @@ export default function SurgeriesByTypeChart({ surgeries, doctors }: SurgeriesBy
                     innerRadius={60}
                     strokeWidth={5}
                 >
+                    {/* Each segment of the pie chart is rendered here with its specific color. */}
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
