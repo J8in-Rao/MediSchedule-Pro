@@ -1,15 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { LoginForm } from '@/components/auth/login-form';
+import { SignupForm } from '@/components/auth/signup-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Stethoscope } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="relative w-full h-screen">
-      <div className="absolute top-4 right-4 z-10">
+       <div className="absolute top-4 right-4 z-10">
           <ModeToggle />
       </div>
       <Image
@@ -19,7 +19,7 @@ export default function LoginPage() {
         className="object-cover dark:brightness-[0.3] dark:grayscale"
         data-ai-hint="operating room"
       />
-      <div className="relative z-10 flex items-center justify-center h-full">
+      <div className="relative z-10 flex items-center justify-center h-full py-12">
         <Card className="mx-auto max-w-sm bg-background/80 backdrop-blur-sm">
           <CardHeader>
              <div className="flex items-center justify-center gap-2 mb-2">
@@ -27,15 +27,15 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold text-primary">MediSchedule Pro</h1>
             </div>
             <CardDescription className="text-center">
-              Enter your credentials to access your account
+              Create your account to get started
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LoginForm />
+            <SignupForm />
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{' '}
-              <Link href="/signup" className="underline">
-                Sign up
+              Already have an account?{' '}
+              <Link href="/" className="underline">
+                Log in
               </Link>
             </div>
           </CardContent>
