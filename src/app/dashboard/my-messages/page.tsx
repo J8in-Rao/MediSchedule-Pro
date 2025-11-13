@@ -23,10 +23,12 @@ export default function MyMessagesPage() {
   const messagesQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
-      collection(firestore, 'messages'),
-      where('sender_id', '==', user.uid),
-      where('receiver_id', '==', 'admin-group'),
-      orderBy('timestamp', 'asc')
+        collection(firestore, "messages"),
+        or(
+            where("sender_id", "==", user.uid),
+            where("receiver_id", "==", user.uid)
+        ),
+        orderBy("timestamp", "asc")
     );
   }, [firestore, user]);
   
@@ -63,6 +65,14 @@ export default function MyMessagesPage() {
     toast({ title: 'Message Sent!' });
     form.reset();
   };
+  
+  const filteredMessages = useMemo(() => {
+    if (!messages) return [];
+    return messages.filter(msg => 
+        (msg.sender_id === user?.uid && msg.receiver_id === 'admin-group') || 
+        (msg.sender_id === 'admin-group' && msg.receiver_id === user?.uid)
+    );
+  }, [messages, user]);
 
   return (
     <>
@@ -79,7 +89,7 @@ export default function MyMessagesPage() {
           <ScrollArea className="flex-grow pr-4">
             <div className="space-y-4">
               {isLoading && <p>Loading messages...</p>}
-              {messages?.map(msg => {
+              {filteredMessages?.map(msg => {
                 const senderInfo = userMap.get(msg.sender_id);
                 const isSentByCurrentUser = msg.sender_id === user?.uid;
                 
@@ -105,7 +115,7 @@ export default function MyMessagesPage() {
                   </div>
                 )
               })}
-              {!isLoading && messages?.length === 0 && (
+              {!isLoading && filteredMessages?.length === 0 && (
                 <p className="text-center text-muted-foreground py-8">No messages yet. Start the conversation!</p>
               )}
             </div>
