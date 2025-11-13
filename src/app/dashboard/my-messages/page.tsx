@@ -10,7 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { collection, serverTimestamp, query, where, or, orderBy } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import type { SupportMessage, UserProfile } from '@/lib/types';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -27,8 +27,8 @@ export default function MyMessagesPage() {
         or(
             where("sender_id", "==", user.uid),
             where("receiver_id", "==", user.uid)
-        ),
-        orderBy("timestamp", "asc")
+        )
+        // orderBy("timestamp", "asc") // Temporarily removed for testing
     );
   }, [firestore, user]);
   
@@ -68,7 +68,14 @@ export default function MyMessagesPage() {
   
   const filteredMessages = useMemo(() => {
     if (!messages) return [];
-    return messages.filter(msg => 
+    // Manually sort messages by timestamp since orderBy is removed from the query
+    const sorted = messages.sort((a, b) => {
+        const timeA = a.timestamp ? (a.timestamp as any).seconds : 0;
+        const timeB = b.timestamp ? (b.timestamp as any).seconds : 0;
+        return timeA - timeB;
+    });
+
+    return sorted.filter(msg => 
         (msg.sender_id === user?.uid && msg.receiver_id === 'admin-group') || 
         (msg.sender_id === 'admin-group' && msg.receiver_id === user?.uid)
     );
