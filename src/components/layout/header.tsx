@@ -14,10 +14,13 @@ import {
   User,
   ShieldAlert,
   Hospital,
-  Package
+  Package,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
+import { useTheme } from "next-themes";
 
 import {
   Breadcrumb,
@@ -35,6 +38,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
@@ -60,6 +67,7 @@ export default function Header({ userRole }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const auth = useAuth();
+  const { setTheme } = useTheme();
   const pathParts = pathname.split('/').filter(Boolean);
 
   const mobileNavItems = allMobileNavItems.filter(item => userRole && item.roles.includes(userRole));
@@ -165,6 +173,26 @@ export default function Header({ userRole }: HeaderProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild><Link href="/dashboard/settings">Settings</Link></DropdownMenuItem>
           <DropdownMenuItem asChild><Link href="/dashboard/support">Support</Link></DropdownMenuItem>
+           <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="ml-2">Theme</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")}>
+                  System
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
         </DropdownMenuContent>
@@ -172,5 +200,3 @@ export default function Header({ userRole }: HeaderProps) {
     </header>
   );
 }
-
-    
