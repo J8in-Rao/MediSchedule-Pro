@@ -22,7 +22,7 @@ export default function LoginPage() {
         </div>
         <div className="relative w-full h-full">
             <Image
-            src="https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=2127&auto=format&fit=crop"
+            src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             alt="Image of a modern operating room"
             fill
             className="object-cover dark:brightness-[0.3] dark:grayscale"
