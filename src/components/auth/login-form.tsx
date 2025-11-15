@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
+import { logAction } from "@/lib/logging";
 
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -42,13 +44,15 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      logAction(userCredential.user, firestore, 'LOGIN_SUCCESS');
       toast({
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
       router.push('/dashboard');
     } catch (error: any) {
+      logAction(null, firestore, 'LOGIN_FAILURE', { email: values.email, error: error.message });
       toast({
         variant: "destructive",
         title: "Login Failed",
@@ -97,7 +101,7 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full bg-[#FFB347] hover:bg-[#FFB347]/90 text-primary-foreground">
+        <Button type="submit" className="w-full">
           Log In
         </Button>
       </form>

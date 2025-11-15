@@ -3,12 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { toast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import type { StaffMember } from "@/app/dashboard/staff/page";
+import { logAction } from "@/lib/logging";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -88,6 +89,7 @@ type StaffFormProps = {
 
 export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
     const firestore = useFirestore();
+    const { user: adminUser } = useUser();
     
     const finalSchema = staff ? editStaffSchema : addStaffSchema;
 
@@ -149,6 +151,10 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
     }, [staff, form]);
 
   async function onSubmit(values: z.infer<typeof finalSchema>) {
+    if (!adminUser) {
+        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to perform this action." });
+        return;
+    }
     try {
         const [firstName, ...lastName] = values.name.split(' ');
         
@@ -174,7 +180,7 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                     verified: values.verified,
                 }, { merge: true });
             }
-
+            logAction(adminUser, firestore, 'UPDATE_STAFF', { staffId: staff.id, staffName: values.name });
             toast({ title: "Staff Updated", description: `${values.name}'s profile has been updated.` });
 
         } else { // Creating new user (Doctor or Admin)
@@ -209,7 +215,7 @@ export function StaffForm({ isOpen, setIsOpen, staff }: StaffFormProps) {
                     created_at: serverTimestamp(),
                 }, { merge: true });
             }
-
+            logAction(adminUser, firestore, 'CREATE_STAFF', { staffId: user.uid, staffName: newValues.name });
             toast({ title: "User Added", description: `${newValues.name} (${newValues.role}) has been added.` });
         }
         setIsOpen(false);

@@ -43,6 +43,7 @@ import { toast } from "@/hooks/use-toast";
 import { useFirestore, useUser } from "@/firebase";
 import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Textarea } from "../ui/textarea";
+import { logAction } from "@/lib/logging";
 
 const formSchema = z.object({
   name: z.string().min(1, "Patient name is required"),
@@ -92,12 +93,17 @@ export function PatientForm({ isOpen, setIsOpen, patient }: PatientFormProps) {
     if (patient) {
       const patientRef = doc(firestore, "patients", patient.id);
       setDocumentNonBlocking(patientRef, patientData, { merge: true });
+      logAction(user, firestore, 'UPDATE_PATIENT', { patientId: patient.id, name: values.name });
        toast({
         title: "Patient Updated",
         description: `The record for ${values.name} has been successfully updated.`,
       });
     } else {
-      addDocumentNonBlocking(collection(firestore, 'patients'), patientData);
+      addDocumentNonBlocking(collection(firestore, 'patients'), patientData).then(docRef => {
+        if(docRef) {
+          logAction(user, firestore, 'CREATE_PATIENT', { patientId: docRef.id, name: values.name });
+        }
+      });
       toast({
         title: "Patient Added",
         description: `${values.name} has been added to the patient list.`,

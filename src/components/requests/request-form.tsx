@@ -45,6 +45,7 @@ import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-b
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent } from "../ui/card";
 import { useRouter } from "next/navigation";
+import { logAction } from "@/lib/logging";
 
 
 const formSchema = z.object({
@@ -118,6 +119,7 @@ export function RequestForm({ isOpen, setIsOpen, request }: RequestFormProps) {
     if (request) {
       const requestRef = doc(firestore, "surgery_requests", request.id);
       setDocumentNonBlocking(requestRef, { ...requestData, updated_at: serverTimestamp() }, { merge: true });
+      logAction(user, firestore, 'UPDATE_SURGERY_REQUEST', { requestId: request.id, procedure: values.procedure_name });
        toast({ title: "Request Updated", description: "Your surgery request has been updated." });
 
     } else {
@@ -127,6 +129,10 @@ export function RequestForm({ isOpen, setIsOpen, request }: RequestFormProps) {
         status: 'Pending',
         created_at: serverTimestamp(),
         updated_at: serverTimestamp()
+      }).then(docRef => {
+        if(docRef) {
+          logAction(user, firestore, 'CREATE_SURGERY_REQUEST', { requestId: docRef.id, procedure: values.procedure_name });
+        }
       });
       toast({ title: "Request Submitted", description: "Your request has been sent for approval." });
     }

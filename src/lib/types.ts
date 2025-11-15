@@ -1,3 +1,13 @@
+import { type FirebaseApp } from 'firebase/app';
+import { type Auth as FirebaseAuth, type User as FirebaseUser } from 'firebase/auth';
+import { type Firestore as FirebaseFirestore } from 'firebase/firestore';
+
+export type App = FirebaseApp;
+export type Auth = FirebaseAuth;
+export type User = FirebaseUser;
+export type Firestore = FirebaseFirestore;
+
+
 export type UserProfile = {
   id: string;
   email: string;

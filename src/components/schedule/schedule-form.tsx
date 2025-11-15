@@ -45,6 +45,7 @@ import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebas
 import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Textarea } from "../ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { logAction } from "@/lib/logging";
 
 const formSchema = z.object({
   procedure: z.string().min(1, "Procedure is required"),
@@ -185,6 +186,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
     if (surgery) {
       const surgeryRef = doc(firestore, "operation_schedules", surgery.id);
       setDocumentNonBlocking(surgeryRef, { ...surgeryData, updated_at: serverTimestamp() }, { merge: true });
+      logAction(user, firestore, 'UPDATE_SCHEDULE', { scheduleId: surgery.id, procedure: values.procedure });
        toast({ title: "Operation Updated", description: `The operation "${values.procedure}" has been successfully updated.`});
 
        const message = `Notice: The schedule for your surgery "${values.procedure}" on ${surgeryData.date} has been updated by an admin.`;
@@ -203,6 +205,10 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
         created_by: user.uid,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp()
+      }).then(docRef => {
+        if(docRef) {
+            logAction(user, firestore, 'CREATE_SCHEDULE', { scheduleId: docRef.id, procedure: values.procedure });
+        }
       });
       toast({ title: "Operation Scheduled", description: `The operation "${values.procedure}" has been successfully scheduled.`});
     }
@@ -210,6 +216,7 @@ export function ScheduleForm({ isOpen, setIsOpen, doctors, patients, surgery, re
     if (request) {
       const requestRef = doc(firestore, "surgery_requests", request.id);
       setDocumentNonBlocking(requestRef, { status: "Scheduled" }, { merge: true });
+      logAction(user, firestore, 'APPROVE_SURGERY_REQUEST', { requestId: request.id });
     }
     
     setIsOpen(false);
