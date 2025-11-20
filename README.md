@@ -3,6 +3,13 @@
 "MediSchedule Pro" is an advanced operating theater (OT) scheduling and management application designed for modern healthcare facilities. It addresses the logistical challenges of surgical scheduling by providing a dynamic, real-time system for administrators and doctors.
 
 This project transforms the static, manual process of scheduling into a workable model that integrates multiple hospital scenarios, such as room availability, doctor schedules, and operating room capabilities.
+## Test Accounts
+   ### ADMIN
+      email - admin@medi.com
+      pass - admin1234
+   ### doctor
+      email - karan.bhatt@medicare.com
+      pass - karan1234
 
 ## Tech Stack
 
@@ -53,13 +60,6 @@ The application follows a modern, server-enhanced web architecture using the Nex
 ---
 
 ## Getting Started & Workflow
-## Test Accounts
-   ### ADMIN
-      email - admin@medi.com
-      pass - admin1234
-   ### doctor
-      email - karan.bhatt@medicare.com
-      pass - karan1234
 
 ### Prerequisites
 - Node.js
