@@ -53,6 +53,13 @@ The application follows a modern, server-enhanced web architecture using the Nex
 ---
 
 ## Getting Started & Workflow
+## Test Accounts
+   ### ADMIN
+      email - admin@medi.com
+      pass - admin1234
+   ### doctor
+      email - karan.bhatt@medicare.com
+      pass - karan1234
 
 ### Prerequisites
 - Node.js
