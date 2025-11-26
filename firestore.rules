@@ -40,9 +40,10 @@ service cloud.firestore {
       allow update: if isUser(userId) || isAdmin(); // Users can update their own profile, admins can update any.
     }
 
-    // DOCTORS: All authenticated users can read doctor profiles. Only admins or the doctor themselves can edit.
+    // DOCTORS: All authenticated users can read. A doctor can create their own profile. Only admins or the doctor themselves can edit.
     match /doctors/{doctorId} {
       allow read: if isAuthenticated();
+      allow create: if isUser(doctorId); // A user can create their own doctor profile
       allow write: if isAdmin() || isUser(doctorId);
     }
     
@@ -91,10 +92,10 @@ service cloud.firestore {
         allow read, update, delete: if isAdmin();
     }
     
-    // --- Default Deny ---
-    // Deny access to any other path by default.
-    match /{document=**} {
-      allow read, write: if false;
+    // LOGS: Allow any authenticated user to create a log entry. Deny reads/updates/deletes.
+    match /logs/{logId} {
+        allow read, update, delete: if false;
+        allow create: if isAuthenticated();
     }
   }
 }
