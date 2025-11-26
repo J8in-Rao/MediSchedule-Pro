@@ -24,7 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { logAction } from "@/lib/logging";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
