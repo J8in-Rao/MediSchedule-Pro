@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc } from "firebase/firestore";
 import { useAuth, useFirestore } from "@/firebase";
+import React from 'react';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,12 +24,22 @@ import { toast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { logAction } from "@/lib/logging";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  specialization: z.string().min(1, "Specialization is required for doctors."),
+  role: z.enum(["doctor", "admin"], { required_error: "You need to select a role." }),
+  specialization: z.string().optional(),
+}).refine(data => {
+    if (data.role === 'doctor' && (!data.specialization || data.specialization.length < 1)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Specialization is required for doctors.",
+    path: ["specialization"],
 });
 
 export function SignupForm() {
@@ -42,9 +53,12 @@ export function SignupForm() {
       name: "",
       email: "",
       password: "",
+      role: "doctor",
       specialization: "",
     },
   });
+
+  const role = form.watch("role");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -59,28 +73,29 @@ export function SignupForm() {
         email: values.email,
         firstName: firstName,
         lastName: lastName.join(' '),
-        role: "doctor" // Always sign up as a doctor
+        role: values.role
       }, { merge: true });
 
-
-      const doctorRef = doc(firestore, "doctors", user.uid);
-      setDocumentNonBlocking(doctorRef, {
-        id: user.uid,
-        name: values.name,
-        email: values.email,
-        specialization: values.specialization,
-        phone: "", // To be filled in from settings
-        shift_hours: "9AM-5PM", // Default value
-        availability: [], // To be filled in from settings
-        avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
-        verified: false, // Doctors start as unverified
-      }, { merge: true });
+      if (values.role === 'doctor') {
+        const doctorRef = doc(firestore, "doctors", user.uid);
+        setDocumentNonBlocking(doctorRef, {
+            id: user.uid,
+            name: values.name,
+            email: values.email,
+            specialization: values.specialization,
+            phone: "", // To be filled in from settings
+            shift_hours: "9AM-5PM", // Default value
+            availability: [], // To be filled in from settings
+            avatarUrl: PlaceHolderImages.find(p => p.imageHint.includes('doctor'))?.imageUrl || '',
+            verified: false, // Doctors start as unverified
+        }, { merge: true });
+      }
       
-      logAction(user, firestore, 'CREATE_STAFF', { staffId: user.uid, staffName: values.name, role: 'doctor' });
+      logAction(user, firestore, 'CREATE_STAFF', { staffId: user.uid, staffName: values.name, role: values.role });
 
       toast({
         title: "Signup Successful",
-        description: `Your doctor account has been created. You can now log in.`,
+        description: `Your ${values.role} account has been created. You can now log in.`,
       });
 
       router.push('/');
@@ -136,18 +151,51 @@ export function SignupForm() {
           )}
         />
         <FormField
-            control={form.control}
-            name="specialization"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Specialization</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Cardiology" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Select Your Role</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex space-x-4"
+                >
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="doctor" />
+                    </FormControl>
+                    <FormLabel className="font-normal">Doctor</FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="admin" />
+                    </FormControl>
+                    <FormLabel className="font-normal">Admin</FormLabel>
+                  </FormItem>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {role === 'doctor' && (
+            <FormField
+                control={form.control}
+                name="specialization"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Specialization</FormLabel>
+                    <FormControl>
+                    <Input placeholder="e.g., Cardiology" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        )}
         
         <Button type="submit" className="w-full">
           Create Account
